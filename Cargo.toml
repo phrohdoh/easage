@@ -1,0 +1,10 @@
+[package]
+authors = ["Taryn Hill <taryn@phrohdoh.com>"]
+name = "easage"
+version = "0.0.1"
+license = "MIT"
+
+[dependencies]
+byteorder = "1.1.0"
+memmap = "0.5.2"
+owning_ref = "0.3.3"
