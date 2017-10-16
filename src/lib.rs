@@ -1,16 +1,18 @@
+extern crate byteorder;
+use byteorder::{LittleEndian, BigEndian, ReadBytesExt};
+
 extern crate memmap;
 use memmap::{Mmap, Protection};
 
 extern crate owning_ref;
 use owning_ref::ArcRef;
 
-extern crate byteorder;
-use byteorder::{LittleEndian, BigEndian, ReadBytesExt};
-
+use std::collections::HashMap;
 use std::io::BufRead;
+use std::ops::Deref;
 use std::path::Path;
 use std::sync::Arc;
-use std::ops::Deref;
+use std::io::{Seek, SeekFrom};
 
 #[derive(Debug, Clone)]
 pub enum Kind {
@@ -76,10 +78,11 @@ impl Archive {
         values.read_u32::<BigEndian>().unwrap()
     }
 
-    pub fn entry_metadata_table(&mut self) -> Vec<Entry> {
+    pub fn entry_metadata_table(&mut self) -> HashMap<String, Entry> {
         let len = self.len();
         let mut c = std::io::Cursor::new(&self[..]);
-        c.set_position(Self::HEADER_LEN);
+        // TODO: Proper error handling.
+        c.seek(SeekFrom::Start(Self::HEADER_LEN)).expect("Failed to seek to HEADER_LEN");
 
         (0..len).map(|_| {
             // TODO: Proper error handling.
@@ -94,19 +97,28 @@ impl Archive {
                 name_cow.to_string()
             };
 
-            Entry {
-                offset,
-                len,
-                name,
-            }
-        }).collect::<Vec<_>>()
+            // TODO: Investigate K=&str so `clone()` can be avoided
+            (name.clone(), Entry { offset, len, name })
+        }).collect::<HashMap<_, _>>()
+    }
+
+    pub fn read_entry_by_name(&mut self, name: &str) -> Option<&[u8]> {
+        let table = self.entry_metadata_table();
+        match table.get(name) {
+            Some(entry) => {
+                let start = entry.offset as usize;
+                let end = entry.offset as usize + entry.len as usize;
+                Some(&self[start..end])
+            },
+            None => None,
+        }
     }
 }
 
 impl Deref for Archive {
     type Target = [u8];
 
-    fn deref(&self) -> &[u8] {
+    fn deref(&self) -> &Self::Target {
         &self.data
     }
 }

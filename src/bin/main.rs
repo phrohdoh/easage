@@ -10,12 +10,14 @@ fn main() {
         println!("  kind: {:?}", archive.kind());
         println!("  size: {:?}", archive.size());
         println!("  len: {:?}", archive.len());
-        println!("  data start: {:?}", archive.data_start());
+        println!("  data start: 0x{:x}", archive.data_start());
+
+        let table = archive.entry_metadata_table();
 
         println!("Entries:");
-        for entry in archive.entry_metadata_table().iter() {
-            println!("  {}", entry.name);
-            println!("    offset: {}", entry.offset);
+        for (name, entry) in table.iter() {
+            println!("  {}", name);
+            println!("    offset: 0x{:x}", entry.offset);
             println!("    len: {}", entry.len);
         }
     }
