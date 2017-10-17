@@ -8,3 +8,13 @@ license = "MIT"
 byteorder = "1.1.0"
 memmap = "0.5.2"
 owning_ref = "0.3.3"
+walkdir = { version = "1", optional = true }
+
+[[bin]]
+name = "bigwrite"
+path = "src/bin/bigwrite.rs"
+required-features = ["walkdir"]
+
+[[bin]]
+name = "main"
+path = "src/bin/main.rs"

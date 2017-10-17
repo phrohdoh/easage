@@ -33,7 +33,7 @@ pub struct Archive {
 }
 
 impl Archive {
-    const HEADER_LEN: u64 = 16;
+    pub const HEADER_LEN: u32 = 16;
 
     pub fn from_path<P: AsRef<Path>>(path: P) -> std::io::Result<Archive> {
         let path = path.as_ref();
@@ -82,7 +82,7 @@ impl Archive {
         let len = self.len();
         let mut c = std::io::Cursor::new(&self[..]);
         // TODO: Proper error handling.
-        c.seek(SeekFrom::Start(Self::HEADER_LEN)).expect("Failed to seek to HEADER_LEN");
+        c.seek(SeekFrom::Start(Self::HEADER_LEN as u64)).expect("Failed to seek to HEADER_LEN");
 
         (0..len).map(|_| {
             // TODO: Proper error handling.
