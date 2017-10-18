@@ -56,9 +56,7 @@ impl Entry {
 
 fn compress_dir_to_big(dir_path: &str, output_path: &str) {
     let mut dir_path = dir_path;
-    if dir_path.ends_with('/') {
-        dir_path = dir_path.trim_right_matches('/');
-    }
+    dir_path = dir_path.trim_right_matches('/').trim_right_matches('\\');
 
     let dir_path = Path::new(dir_path);
 
