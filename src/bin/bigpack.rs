@@ -6,6 +6,9 @@ use walkdir::WalkDir;
 extern crate byteorder;
 use byteorder::{LittleEndian, BigEndian, ReadBytesExt, WriteBytesExt};
 
+extern crate clap;
+use clap::{App, Arg};
+
 use std::path::{Path, PathBuf};
 use std::env;
 use std::fs;
@@ -13,13 +16,28 @@ use std::io::{BufWriter, Write};
 use std::ffi::OsString;
 
 fn main() {
-    let mut args = env::args();
-    if let Some(target_dir_path) = args.nth(1) {
-        compress_dir_to_big(&target_dir_path);
-    } else {
-        eprintln!("Please give me a directory to compress!");
-        std::process::exit(1);
-    }
+    let matches = App::new("bigpack")
+       .version("0.0.1")
+       .about("Recursively package a directory structure into a BIG archive")
+       .author("Taryn Hill <taryn@phrohdoh.com>")
+        .arg(Arg::with_name("source")
+            .long("source")
+            .value_name("SOURCE")
+            .takes_value(true)
+            .required(true)
+            .help("Path to the directory to pack into a BIG archive."))
+       .arg(Arg::with_name("output")
+            .long("output")
+            .value_name("OUTPUT")
+            .takes_value(true)
+            .required(true)
+            .help("Path to the output BIG archive."))
+       .get_matches(); 
+
+    let source_dir = matches.value_of("source").unwrap();
+    let output = matches.value_of("output").unwrap();
+
+    compress_dir_to_big(&source_dir, &output);
 }
 
 struct Entry {
@@ -36,18 +54,17 @@ impl Entry {
     }
 }
 
-fn compress_dir_to_big(path: &str) {
-    println!("Compressing [{}]", path);
-    let mut path = path;
-    if path.ends_with('/') {
-        path = path.trim_right_matches('/');
+fn compress_dir_to_big(dir_path: &str, output_path: &str) {
+    let mut dir_path = dir_path;
+    if dir_path.ends_with('/') {
+        dir_path = dir_path.trim_right_matches('/');
     }
 
-    let path = Path::new(path);
+    let dir_path = Path::new(dir_path);
 
     let mut entries = vec![];
 
-    for entry in WalkDir::new(path) {
+    for entry in WalkDir::new(dir_path) {
         let entry = entry.unwrap();
 
         let md = entry.metadata().unwrap();
@@ -56,15 +73,13 @@ fn compress_dir_to_big(path: &str) {
         }
 
         let path = entry.path().to_path_buf();
-
         entries.push(Entry::new(path, md.len() as u32));
     }
 
     entries.sort_by(|a, b| a.len.cmp(&b.len));
 
     let buf = vec![];
-    //let mut writer = BufWriter::new(buf);
-    let mut writer = std::io::Cursor::new(buf);
+    let mut writer = BufWriter::new(buf);
 
     let table_size = calc_table_size(entries.iter());
     let data_start = easage::Archive::HEADER_LEN + table_size;
@@ -75,39 +90,34 @@ fn compress_dir_to_big(path: &str) {
     writer.write_u32::<BigEndian>(entries.len() as u32).expect("Failed to write len");
     writer.write_u32::<BigEndian>(data_start).expect("Failed to write data_start");
 
-    println!("Finished writing the header at {}", writer.position());
-
     let mut last_len = 0u32;
     for entry in &entries {
         let len = entry.len;
         let offset = data_start + last_len;
+        let name_bytes = entry.name.to_str().unwrap().as_bytes();
+
         writer.write_u32::<BigEndian>(offset).expect("Failed to write entry's offset");
         writer.write_u32::<BigEndian>(len as u32).expect("Failed to write entry's len");
-
-        let name = entry.name.to_str().unwrap();
-        println!("Writing data for {} @ {} for {} bytes", name, offset, len);
-        let name_bytes = name.as_bytes();
-
         writer.write(name_bytes).expect("Failed to write entry's name");
         writer.write(&[b'\0']).expect("Failed to write entry's name's leading NUL");
-    }
 
-    println!("Finished writing the table at {}", writer.position());
+        last_len = len;
+    }
 
     for entry in entries {
         let mut f = std::fs::File::open(entry.name).unwrap();
         std::io::copy(&mut f, &mut writer).expect("Failed to write entry's data");
     }
 
-    let mut inner = writer.into_inner();
+    let mut inner = writer.into_inner().unwrap();
     let mut file = std::fs::OpenOptions::new()
         .read(true)
         .write(true)
         .create(true)
-        .open("_test.big")
+        .open(output_path)
         .unwrap();
 
-    file.write_all(&inner).expect("Failed to write _test.big");
+    file.write_all(&inner).expect(&format!("Failed to write {}", output_path));
 }
 
 fn calc_table_size<'e, I: Iterator<Item=&'e Entry>>(entries: I) -> u32 {
