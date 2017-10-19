@@ -1,6 +1,7 @@
-use ::std::path::{Path, PathBuf};
-use ::std::io::{self, BufWriter, Write};
+use ::std::borrow::Cow;
 use ::std::fs::{File, OpenOptions};
+use ::std::io::{self, BufWriter, Write};
+use ::std::path::{Path, PathBuf};
 
 use walkdir::WalkDir;
 use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
@@ -14,6 +15,10 @@ impl Entry {
     pub fn new(name: PathBuf, len: u32) -> Self {
         Self { name, len }
     }
+
+    fn name(&self) -> Cow<str> {
+        self.name.to_string_lossy()
+    }
 }
 
 pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind, secret_data: Option<&[u8]>) -> ::std::io::Result<()> 
@@ -25,9 +30,9 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
     let mut entries = vec![];
 
     for entry in WalkDir::new(input_directory) {
-        let entry = entry.unwrap();
+        let entry = entry?;
 
-        let md = entry.metadata().unwrap();
+        let md = entry.metadata()?;
         if md.is_dir() {
             continue;
         }
@@ -61,7 +66,8 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
     for entry in &entries {
         let len = entry.len;
         let offset = data_start + last_len;
-        let name_bytes = entry.name.to_str().unwrap().as_bytes();
+        let name_bytes = entry.name();
+        let name_bytes = name_bytes.as_bytes();
 
         writer.write_u32::<BigEndian>(offset)?;
         writer.write_u32::<BigEndian>(len as u32)?;
@@ -77,11 +83,11 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
 
     // Write the actual data
     for entry in entries {
-        let mut f = File::open(entry.name).unwrap();
+        let mut f = File::open(entry.name)?;
         io::copy(&mut f, &mut writer)?;
     }
 
-    let inner = writer.into_inner().unwrap();
+    let inner = writer.into_inner()?;
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)
@@ -101,5 +107,5 @@ fn calc_table_size<'e, I: Iterator<Item=&'e Entry>>(entries: I) -> u32 {
 fn table_record_size(e: &Entry) -> u32 {
     (::std::mem::size_of::<u32>() + // offset
      ::std::mem::size_of::<u32>() + // length
-     e.name.to_str().unwrap().len() + 1) as u32 // name + null
+     e.name().len() + 1) as u32 // name + null
 }
