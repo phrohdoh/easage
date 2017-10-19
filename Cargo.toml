@@ -17,5 +17,5 @@ path = "src/bin/bigpack.rs"
 required-features = ["clap"]
 
 [[bin]]
-name = "main"
-path = "src/bin/main.rs"
+name = "bigread"
+path = "src/bin/bigread.rs"
