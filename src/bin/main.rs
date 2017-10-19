@@ -6,8 +6,14 @@ fn main() {
     if let Some(path) = env::args().nth(1) {
         let mut archive = easage::Archive::from_path(path).unwrap();
 
+        let kind = archive.kind();
+        if let easage::Kind::Unknown(bytes) = kind {
+            eprintln!("Unknown archive type {:?}. Aborting.", bytes);
+            return;
+        }
+
         println!("Archive:");
-        println!("  kind: {:?}", archive.kind());
+        println!("  kind: {:?}", kind);
         println!("  size: {:?}", archive.size());
         println!("  len: {:?}", archive.len());
         println!("  data start: 0x{:x}", archive.data_start());
