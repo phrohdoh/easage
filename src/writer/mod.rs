@@ -51,10 +51,10 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
     let mut writer = BufWriter::new(buf);
 
     // Write the header
-    writer.write(kind_bytes).expect("Failed to write format bytes");
-    writer.write_u32::<LittleEndian>(0).expect("Failed to write [bogus] size"); // TODO
-    writer.write_u32::<BigEndian>(entries.len() as u32).expect("Failed to write len");
-    writer.write_u32::<BigEndian>(data_start).expect("Failed to write data_start");
+    writer.write(kind_bytes)?;
+    writer.write_u32::<LittleEndian>(0)?; // TODO
+    writer.write_u32::<BigEndian>(entries.len() as u32)?;
+    writer.write_u32::<BigEndian>(data_start)?;
 
     // Write the entry metadata table
     let mut last_len = 0u32;
@@ -63,22 +63,22 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
         let offset = data_start + last_len;
         let name_bytes = entry.name.to_str().unwrap().as_bytes();
 
-        writer.write_u32::<BigEndian>(offset).expect("Failed to write entry's offset");
-        writer.write_u32::<BigEndian>(len as u32).expect("Failed to write entry's len");
-        writer.write(name_bytes).expect("Failed to write entry's name");
-        writer.write(&[b'\0']).expect("Failed to write entry's name's trailing NUL");
+        writer.write_u32::<BigEndian>(offset)?;
+        writer.write_u32::<BigEndian>(len as u32)?;
+        writer.write(name_bytes)?;
+        writer.write(&[b'\0'])?;
 
         last_len = len;
     }
 
     if let Some(secret_data) = secret_data {
-        writer.write(secret_data).expect("Failed to write secret data block between table and contents");
+        writer.write(secret_data)?;
     }
 
     // Write the actual data
     for entry in entries {
         let mut f = File::open(entry.name).unwrap();
-        io::copy(&mut f, &mut writer).expect("Failed to write entry's data");
+        io::copy(&mut f, &mut writer)?;
     }
 
     let inner = writer.into_inner().unwrap();
@@ -89,7 +89,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
         .open(output_filepath)
         .unwrap();
 
-    file.write_all(&inner).expect(&format!("Failed to write {}", output_filepath.display()));
+    file.write_all(&inner)?;
 
     Ok(())
 }
