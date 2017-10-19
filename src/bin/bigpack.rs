@@ -71,9 +71,6 @@ fn compress_dir_to_big(dir_path: &str, output_path: &str, kind: easage::Kind, se
 
     entries.sort_by(|a, b| a.len.cmp(&b.len));
 
-    let buf = vec![];
-    let mut writer = BufWriter::new(buf);
-
     let table_size = calc_table_size(entries.iter());
     let data_start = easage::Archive::HEADER_LEN + table_size + secret_data.map(|data| data.len()).unwrap_or(0) as u32;
 
@@ -82,6 +79,9 @@ fn compress_dir_to_big(dir_path: &str, output_path: &str, kind: easage::Kind, se
         easage::Kind::BigF => "BIGF",
         _ => panic!("TODO: Return an error if called with Kind::Unknown")
     }.as_bytes();
+
+    let buf = Vec::with_capacity(data_start as usize);
+    let mut writer = BufWriter::new(buf);
 
     // Write the header
     writer.write(kind_bytes).expect("Failed to write format bytes");
