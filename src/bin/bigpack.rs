@@ -4,35 +4,33 @@ extern crate walkdir;
 use walkdir::WalkDir;
 
 extern crate byteorder;
-use byteorder::{LittleEndian, BigEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
 
 extern crate clap;
 use clap::{App, Arg};
 
+use std::fs::File;
+use std::io::{self, BufWriter, Write};
 use std::path::{Path, PathBuf};
-use std::env;
-use std::fs;
-use std::io::{BufWriter, Write};
-use std::ffi::OsString;
 
 fn main() {
     let matches = App::new("bigpack")
-       .version("0.0.1")
-       .about("Recursively package a directory structure into a BIG archive")
-       .author("Taryn Hill <taryn@phrohdoh.com>")
+        .version("0.0.1")
+        .about("Recursively package a directory structure into a BIG archive")
+        .author("Taryn Hill <taryn@phrohdoh.com>")
         .arg(Arg::with_name("source")
-            .long("source")
-            .value_name("SOURCE")
-            .takes_value(true)
-            .required(true)
-            .help("Path to the directory to pack into a BIG archive."))
-       .arg(Arg::with_name("output")
-            .long("output")
-            .value_name("OUTPUT")
-            .takes_value(true)
-            .required(true)
-            .help("Path to the output BIG archive."))
-       .get_matches(); 
+                .long("source")
+                .value_name("SOURCE")
+                .takes_value(true)
+                .required(true)
+                .help("Path to the directory to pack into a BIG archive."))
+        .arg(Arg::with_name("output")
+                .long("output")
+                .value_name("OUTPUT")
+                .takes_value(true)
+                .required(true)
+                .help("Path to the output BIG archive."))
+        .get_matches();
 
     let source_dir = matches.value_of("source").unwrap();
     let output = matches.value_of("output").unwrap();
@@ -47,10 +45,7 @@ struct Entry {
 
 impl Entry {
     pub fn new(name: PathBuf, len: u32) -> Self {
-        Self {
-            name,
-            len,
-        }
+        Self { name, len }
     }
 }
 
@@ -84,10 +79,11 @@ fn compress_dir_to_big(dir_path: &str, output_path: &str) {
 
     // Write the header
     writer.write(b"BIG4").expect("Failed to write format bytes");
-    writer.write_u32::<LittleEndian>(0).expect("Failed to write [bogus] size");
+    writer.write_u32::<LittleEndian>(0).expect("Failed to write [bogus] size"); // TODO
     writer.write_u32::<BigEndian>(entries.len() as u32).expect("Failed to write len");
     writer.write_u32::<BigEndian>(data_start).expect("Failed to write data_start");
 
+    // Write the entry metadata table
     let mut last_len = 0u32;
     for entry in &entries {
         let len = entry.len;
@@ -97,17 +93,18 @@ fn compress_dir_to_big(dir_path: &str, output_path: &str) {
         writer.write_u32::<BigEndian>(offset).expect("Failed to write entry's offset");
         writer.write_u32::<BigEndian>(len as u32).expect("Failed to write entry's len");
         writer.write(name_bytes).expect("Failed to write entry's name");
-        writer.write(&[b'\0']).expect("Failed to write entry's name's leading NUL");
+        writer.write(&[b'\0']).expect("Failed to write entry's name's trailing NUL");
 
         last_len = len;
     }
 
+    // Write the actual data
     for entry in entries {
-        let mut f = std::fs::File::open(entry.name).unwrap();
-        std::io::copy(&mut f, &mut writer).expect("Failed to write entry's data");
+        let mut f = File::open(entry.name).unwrap();
+        io::copy(&mut f, &mut writer).expect("Failed to write entry's data");
     }
 
-    let mut inner = writer.into_inner().unwrap();
+    let inner = writer.into_inner().unwrap();
     let mut file = std::fs::OpenOptions::new()
         .read(true)
         .write(true)
