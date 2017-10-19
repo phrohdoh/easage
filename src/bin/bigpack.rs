@@ -35,7 +35,7 @@ fn main() {
     let source_dir = matches.value_of("source").unwrap();
     let output = matches.value_of("output").unwrap();
 
-    compress_dir_to_big(&source_dir, &output, easage::Kind::Big4);
+    compress_dir_to_big(&source_dir, &output, easage::Kind::Big4, Some(b"bigpack0.0.1"));
 }
 
 struct Entry {
@@ -49,7 +49,7 @@ impl Entry {
     }
 }
 
-fn compress_dir_to_big(dir_path: &str, output_path: &str, kind: easage::Kind) {
+fn compress_dir_to_big(dir_path: &str, output_path: &str, kind: easage::Kind, secret_data: Option<&[u8]>) {
     let mut dir_path = dir_path;
     dir_path = dir_path.trim_right_matches('/').trim_right_matches('\\');
 
@@ -75,7 +75,7 @@ fn compress_dir_to_big(dir_path: &str, output_path: &str, kind: easage::Kind) {
     let mut writer = BufWriter::new(buf);
 
     let table_size = calc_table_size(entries.iter());
-    let data_start = easage::Archive::HEADER_LEN + table_size;
+    let data_start = easage::Archive::HEADER_LEN + table_size + secret_data.map(|data| data.len()).unwrap_or(0) as u32;
 
     let kind_bytes = match kind {
         easage::Kind::Big4 => "BIG4",
@@ -102,6 +102,10 @@ fn compress_dir_to_big(dir_path: &str, output_path: &str, kind: easage::Kind) {
         writer.write(&[b'\0']).expect("Failed to write entry's name's trailing NUL");
 
         last_len = len;
+    }
+
+    if let Some(secret_data) = secret_data {
+        writer.write(secret_data).expect("Failed to write secret data block between table and contents");
     }
 
     // Write the actual data
