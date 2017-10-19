@@ -35,7 +35,7 @@ fn main() {
     let source_dir = matches.value_of("source").unwrap();
     let output = matches.value_of("output").unwrap();
 
-    compress_dir_to_big(&source_dir, &output);
+    compress_dir_to_big(&source_dir, &output, easage::Kind::Big4);
 }
 
 struct Entry {
@@ -49,7 +49,7 @@ impl Entry {
     }
 }
 
-fn compress_dir_to_big(dir_path: &str, output_path: &str) {
+fn compress_dir_to_big(dir_path: &str, output_path: &str, kind: easage::Kind) {
     let mut dir_path = dir_path;
     dir_path = dir_path.trim_right_matches('/').trim_right_matches('\\');
 
@@ -77,8 +77,14 @@ fn compress_dir_to_big(dir_path: &str, output_path: &str) {
     let table_size = calc_table_size(entries.iter());
     let data_start = easage::Archive::HEADER_LEN + table_size;
 
+    let kind_bytes = match kind {
+        easage::Kind::Big4 => "BIG4",
+        easage::Kind::BigF => "BIGF",
+        _ => panic!("TODO: Return an error if called with Kind::Unknown")
+    }.as_bytes();
+
     // Write the header
-    writer.write(b"BIG4").expect("Failed to write format bytes");
+    writer.write(kind_bytes).expect("Failed to write format bytes");
     writer.write_u32::<LittleEndian>(0).expect("Failed to write [bogus] size"); // TODO
     writer.write_u32::<BigEndian>(entries.len() as u32).expect("Failed to write len");
     writer.write_u32::<BigEndian>(data_start).expect("Failed to write data_start");
