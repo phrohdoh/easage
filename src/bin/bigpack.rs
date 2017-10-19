@@ -116,7 +116,7 @@ fn compress_dir_to_big(dir_path: &str, output_path: &str) {
 }
 
 fn calc_table_size<'e, I: Iterator<Item=&'e Entry>>(entries: I) -> u32 {
-    entries.map(|e| table_record_size(e)).sum()
+    entries.map(table_record_size).sum()
 }
 
 fn table_record_size(e: &Entry) -> u32 {
