@@ -7,12 +7,17 @@ use memmap::{Mmap, Protection};
 extern crate owning_ref;
 use owning_ref::ArcRef;
 
+extern crate walkdir;
+
 use std::collections::HashMap;
 use std::io::BufRead;
 use std::ops::Deref;
 use std::path::Path;
 use std::sync::Arc;
 use std::io::{Seek, SeekFrom};
+
+mod writer;
+pub use writer::pack_directory;
 
 #[derive(Debug, Clone)]
 pub enum Kind {
