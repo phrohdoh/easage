@@ -29,6 +29,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
 
     let mut entries = vec![];
 
+    let mut total_size_of_entries = 0u32;
     for entry in WalkDir::new(input_directory) {
         let entry = entry?;
 
@@ -38,7 +39,10 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
         }
 
         let path = entry.path().to_path_buf();
-        entries.push(Entry::new(path, md.len() as u32));
+        let len = md.len() as u32;
+        total_size_of_entries += len;
+
+        entries.push(Entry::new(path, len));
     }
 
     entries.sort_by(|a, b| a.len.cmp(&b.len));
@@ -57,7 +61,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
 
     // Write the header
     writer.write(kind_bytes)?;
-    writer.write_u32::<LittleEndian>(0)?; // TODO
+    writer.write_u32::<LittleEndian>(data_start + total_size_of_entries)?;
     writer.write_u32::<BigEndian>(entries.len() as u32)?;
     writer.write_u32::<BigEndian>(data_start)?;
 
