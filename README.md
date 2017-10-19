@@ -1,6 +1,6 @@
 # `easage`
 
-A library that provides programatic manipulation of BIG archives.
+A library that provides programmatic manipulation of BIG archives.
 
 ---
 
