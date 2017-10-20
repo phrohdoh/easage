@@ -20,8 +20,3 @@ required-features = ["clap"]
 name = "bigpack"
 path = "src/bin/bigpack.rs"
 required-features = ["clap"]
-
-[[bin]]
-name = "bigextract"
-path = "src/bin/bigextract.rs"
-required-features = ["clap"]

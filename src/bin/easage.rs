@@ -1,5 +1,5 @@
 extern crate clap;
-use clap::{Arg, App, SubCommand};
+use clap::App;
 
 extern crate easage;
 
