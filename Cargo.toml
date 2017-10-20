@@ -15,8 +15,3 @@ clap = { version = "2.26", optional = true }
 name = "easage"
 path = "src/bin/easage.rs"
 required-features = ["clap"]
-
-[[bin]]
-name = "bigpack"
-path = "src/bin/bigpack.rs"
-required-features = ["clap"]
