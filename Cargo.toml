@@ -12,6 +12,11 @@ walkdir = "1"
 clap = { version = "2.26", optional = true }
 
 [[bin]]
+name = "easage"
+path = "src/bin/easage.rs"
+required-features = ["clap"]
+
+[[bin]]
 name = "bigpack"
 path = "src/bin/bigpack.rs"
 required-features = ["clap"]
@@ -20,7 +25,3 @@ required-features = ["clap"]
 name = "bigextract"
 path = "src/bin/bigextract.rs"
 required-features = ["clap"]
-
-[[bin]]
-name = "bigread"
-path = "src/bin/bigread.rs"
