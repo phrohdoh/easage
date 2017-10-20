@@ -39,7 +39,7 @@ cargo build --bin easage --features="clap" --release
 ### Examples:
 
 ```sh
-easage list path/to/a/file.gif
+easage list path/to/a/file.big
 ```
 
 ```sh
