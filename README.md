@@ -46,3 +46,13 @@ cargo run --bin bigpack --features="clap" --release -- --source test_data --outp
 # or if you have the `bigpack` binary itself
 bigpack --source test_data --output output/path.big
 ```
+
+## License
+
+[MIT](LICENSE.md)
+
+## Contributing
+
+Any contribution you intentionally submit for inclusion in the work, as defined
+in the `LICENSE.md` file, shall be licensed as above, and are subject to the
+project's [CLA](https://gist.github.com/Phrohdoh/d402395a3d8c453e4399f7ae345c0d72).
