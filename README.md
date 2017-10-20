@@ -35,8 +35,14 @@ Included in this source tree are two example command-line applications that use 
 
 ```sh
 cargo run --bin bigread --release -- path/to/a/file.big
+
+# or if you have the `bigread` binary itself
+bigread path/to/a/file.gif
 ```
 
 ```sh
 cargo run --bin bigpack --features="clap" --release -- --source test_data --output output/path.big
+
+# or if you have the `bigpack` binary itself
+bigpack --source test_data --output output/path.big
 ```
