@@ -28,10 +28,11 @@ cargo build --release
 
 ## Running
 
-Included in this source tree are two example command-line applications that use `easage`:
+Included in this source tree are three example command-line applications that use `easage`:
 
 * bigread (prints out metadata given a single .big filepath)
 * bigpack (recursively packages a directory into a .big file [run with the `help` command])
+* bigextract (extracts an archive's contents into a directory)
 
 ```sh
 cargo run --bin bigread --release -- path/to/a/file.big
@@ -45,6 +46,13 @@ cargo run --bin bigpack --features="clap" --release -- --source test_data --outp
 
 # or if you have the `bigpack` binary itself
 bigpack --source test_data --output output/path.big
+```
+
+```sh
+cargo run --bin bigextract --features=clap --release -- --source path/to/a.big --output the/directory/to/extract/into/
+
+# or if you have the `bigextract` binary itself
+bigextract --source path/to/a.big --output the/directory/to/extract/into/
 ```
 
 ## License
