@@ -36,6 +36,10 @@ You can build this application like so:
 cargo build --bin easage --features="clap" --release
 ```
 
+The output binary will be written to `target/release/easage`.
+
+You can invoke this directly or put it somewhere on your shell's `$PATH`.
+
 ### Examples:
 
 ```sh
