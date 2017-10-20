@@ -7,17 +7,17 @@ use walkdir::WalkDir;
 use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
 
 struct Entry {
-    name: PathBuf,
+    path: PathBuf,
     len: u32,
 }
 
 impl Entry {
-    pub fn new(name: PathBuf, len: u32) -> Self {
-        Self { name, len }
+    pub fn new(path: PathBuf, len: u32) -> Self {
+        Self { path, len }
     }
 
-    fn name(&self) -> Cow<str> {
-        self.name.to_string_lossy()
+    fn path(&self) -> Cow<str> {
+        self.path.to_string_lossy()
     }
 }
 
@@ -70,7 +70,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
     for entry in &entries {
         let len = entry.len;
         let offset = data_start + last_len;
-        let name_bytes = entry.name();
+        let name_bytes = entry.path();
         let name_bytes = name_bytes.as_bytes();
 
         writer.write_u32::<BigEndian>(offset)?;
@@ -87,7 +87,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
 
     // Write the actual data
     for entry in entries {
-        let mut f = File::open(entry.name)?;
+        let mut f = File::open(entry.path)?;
         io::copy(&mut f, &mut writer)?;
     }
 
@@ -110,5 +110,5 @@ fn calc_table_size<'e, I: Iterator<Item=&'e Entry>>(entries: I) -> u32 {
 fn table_record_size(e: &Entry) -> u32 {
     (::std::mem::size_of::<u32>() + // offset
      ::std::mem::size_of::<u32>() + // length
-     e.name().len() + 1) as u32 // name + null
+     e.path().len() + 1) as u32 // name + null
 }
