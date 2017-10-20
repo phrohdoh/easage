@@ -28,6 +28,8 @@ cargo build --release
 
 ## Running
 
+> Note: This part is under construction and will be changing rapidly. Information here may be incorrect at the time of reading.
+
 Included in this source tree are three example command-line applications that use `easage`:
 
 * bigread (prints out metadata given a single .big filepath)
