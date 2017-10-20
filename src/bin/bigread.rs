@@ -14,11 +14,11 @@ fn main() {
 
         println!("Archive:");
         println!("  kind: {:?}", kind);
-        println!("  size: {:?}", archive.size());
-        println!("  len: {:?}", archive.len());
-        println!("  data start: 0x{:x}", archive.data_start());
+        println!("  size: {:?}", archive.size().unwrap());
+        println!("  len: {:?}", archive.len().unwrap());
+        println!("  data start: 0x{:x}", archive.data_start().unwrap());
 
-        let table = archive.entry_metadata_table();
+        let table = archive.entry_metadata_table().unwrap();
 
         println!("Entries:");
         for (name, entry) in table.iter() {
