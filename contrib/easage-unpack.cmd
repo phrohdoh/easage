@@ -15,22 +15,22 @@ rem Set out to unpack to a specific folder.
 set out=
 set exit_timeout=5
 
-:NotExtracted
-if (%1) EQU () goto Extracted
+:NotUnpacked
+if (%1) EQU () goto Unpacked
 if not defined ignore_ext (
     if "%~nx1" NEQ "%~n1.big" goto NotBIG
 )
 if defined out (
     echo Unpacking: "%~nx1" to "%out%"
-    easage extract --source "%~nx1" --output "%out%"
+    easage unpack --source "%~nx1" --output "%out%"
 ) else (
     echo Unpacking: "%~nx1" to "%~n1"
-    easage extract --source "%~nx1" --output "%~n1"
+    easage unpack --source "%~nx1" --output "%~n1"
 )
 shift
-goto NotExtracted
+goto NotUnpacked
 
-:Extracted
+:Unpacked
 echo.
 echo All BIGs unpacked or you have not selected anything.
 echo.

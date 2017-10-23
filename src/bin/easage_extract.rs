@@ -5,7 +5,7 @@ use clap::{Arg, ArgMatches, App, SubCommand};
 
 use ::easage::Archive;
 
-pub const COMMAND_NAME: &'static str = "extract";
+pub const COMMAND_NAME: &'static str = "unpack";
 const ARG_NAME_SOURCE: &'static str = "source";
 const ARG_NAME_OUTPUT: &'static str = "output";
 
