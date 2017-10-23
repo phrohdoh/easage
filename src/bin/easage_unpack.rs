@@ -5,14 +5,14 @@ use clap::{Arg, ArgMatches, App, SubCommand};
 
 use ::easage::Archive;
 
-pub const COMMAND_NAME: &'static str = "extract";
+pub const COMMAND_NAME: &'static str = "unpack";
 const ARG_NAME_SOURCE: &'static str = "source";
 const ARG_NAME_OUTPUT: &'static str = "output";
 
 pub fn get_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name(COMMAND_NAME)
         .version("0.0.1")
-        .about("Extract the contents of a BIG archive")
+        .about("Unpack the contents of a BIG archive")
         .author("Taryn Hill <taryn@phrohdoh.com>")
         .arg(Arg::with_name(ARG_NAME_SOURCE)
                 .long(ARG_NAME_SOURCE)

@@ -51,7 +51,7 @@ easage pack --source test_data --output output/path.big
 ```
 
 ```sh
-easage extract --source path/to/a.big --output the/directory/to/extract/into/
+easage unpack --source path/to/a.big --output the/directory/to/unpack/into/
 ```
 
 See [contrib](https://github.com/Phrohdoh/easage/tree/master/contrib) for more usage suggestions.
