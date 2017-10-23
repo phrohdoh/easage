@@ -54,6 +54,8 @@ easage pack --source test_data --output output/path.big
 easage extract --source path/to/a.big --output the/directory/to/extract/into/
 ```
 
+See [contrib](https://github.com/Phrohdoh/easage/tree/master/contrib) for more usage suggestions.
+
 ## License
 
 [MIT](LICENSE.md)
