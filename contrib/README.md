@@ -6,6 +6,8 @@ Contributed examples of how users may use the `easage` library and tools.
 
 ## `easage-pack.cmd` and `easage-unpack.cmd`
 
+![usage](https://user-images.githubusercontent.com/5067989/31890321-9c3b6a04-b7fa-11e7-87e0-037db87b73f2.gif)
+
 Scripts for drag-and-drop operations in Windows' File Explorer.
 Handles multiple selections of alpha-numeric filenames or folders.
 
