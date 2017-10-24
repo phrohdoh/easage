@@ -41,7 +41,7 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
         if let Some(data) = archive.read_entry_by_name(entry_name) {
             let output_file = {
                 let mut o = output.clone();
-                o.push(entry_name);
+                o.push(entry_name.replace("\\", "/"));
                 o
             };
 
