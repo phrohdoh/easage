@@ -32,5 +32,5 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
     let output = args.value_of(ARG_NAME_OUTPUT).unwrap();
     let output = PathBuf::from(output);
 
-    easage::pack_directory(&source, &output, Kind::Big4, Some(b"easage0.0.1"))
+    easage::pack_directory(&source, &output, Kind::BigF, Some(b"easage0.0.1"))
 }
