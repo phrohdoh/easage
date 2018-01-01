@@ -96,6 +96,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
         .read(true)
         .write(true)
         .create(true)
+        .truncate(true)
         .open(output_filepath)?;
 
     file.write_all(&inner)?;
