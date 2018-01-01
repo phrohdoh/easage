@@ -7,6 +7,7 @@ use ::easage::{self, Kind};
 pub const COMMAND_NAME: &'static str = "pack";
 const ARG_NAME_SOURCE: &'static str = "source";
 const ARG_NAME_OUTPUT: &'static str = "output";
+const ARG_NAME_KIND: &'static str = "kind";
 
 pub fn get_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name(COMMAND_NAME)
@@ -25,12 +26,31 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .required(true)
                 .help("Path to the output BIG archive."))
+        .arg(Arg::with_name(ARG_NAME_KIND)
+                .long(ARG_NAME_KIND)
+                .value_name(ARG_NAME_KIND)
+                .takes_value(true)
+                .required(true)
+                .validator(validate_is_bigf_or_big4)
+                .help("BIG archive kind (BIGF or BIG4, case-sensitive)"))
 }
 
 pub fn run(args: &ArgMatches) -> io::Result<()> {
     let source = args.value_of(ARG_NAME_SOURCE).unwrap();
+
     let output = args.value_of(ARG_NAME_OUTPUT).unwrap();
     let output = PathBuf::from(output);
 
-    easage::pack_directory(&source, &output, Kind::Big4, Some(b"easage0.0.1"))
+    let kind = args.value_of(ARG_NAME_KIND).unwrap();
+    let kind = Kind::from_bytes(kind.as_bytes());
+
+    easage::pack_directory(&source, &output, kind, Some(b"easage0.0.1"))
+}
+
+fn validate_is_bigf_or_big4(v: String) -> Result<(), String> {
+    if v != "BIG4" && v != "BIGF" {
+        Err(format!("{} must be one of 'BIGF' or 'BIG4'", ARG_NAME_KIND))
+    } else {
+        Ok(())
+    }
 }

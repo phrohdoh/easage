@@ -25,6 +25,16 @@ pub enum Kind {
     BigF,
 }
 
+impl Kind {
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        match bytes {
+            b"BIG4" => Kind::Big4,
+            b"BIGF" => Kind::BigF,
+            _ => Kind::Unknown(Vec::from(bytes)),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Entry {
     pub offset: u32,
@@ -58,11 +68,7 @@ impl Archive {
     }
 
     pub fn kind(&self) -> Kind {
-        match &self[0..4] {
-            b"BIG4" => Kind::Big4,
-            b"BIGF" => Kind::BigF,
-            bytes => Kind::Unknown(Vec::from(bytes)),
-        }
+        Kind::from_bytes(&self[0..4])
     }
 
     pub fn size(&self) -> io::Result<u32> {
