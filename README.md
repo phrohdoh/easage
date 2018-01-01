@@ -47,7 +47,7 @@ easage list path/to/a/file.big
 ```
 
 ```sh
-easage pack --source test_data --output output/path.big
+easage pack --source test_data --output output/path.big --kind BIG4
 ```
 
 ```sh
