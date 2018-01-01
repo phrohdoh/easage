@@ -1,5 +1,5 @@
 extern crate clap;
-use clap::App;
+use clap::{App, AppSettings};
 
 extern crate easage;
 
@@ -17,6 +17,7 @@ fn main() {
         .version("0.0.1")
         .about("Read, create, and unpack from BIG archives")
         .author("Taryn Hill <taryn@phrohdoh.com>")
+        .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(list::get_command())
         .subcommand(pack::get_command())
         .subcommand(unpack::get_command())
