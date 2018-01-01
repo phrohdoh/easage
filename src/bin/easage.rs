@@ -12,9 +12,11 @@ use easage_list as list;
 mod easage_pack;
 use easage_pack as pack;
 
+const VERSION: &'static str = "0.0.1";
+
 fn main() {
     let matches = App::new("easage")
-        .version("0.0.1")
+        .version(VERSION)
         .about("Read, create, and unpack from BIG archives")
         .author("Taryn Hill <taryn@phrohdoh.com>")
         .setting(AppSettings::SubcommandRequiredElseHelp)

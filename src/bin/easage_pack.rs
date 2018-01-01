@@ -9,9 +9,11 @@ const ARG_NAME_SOURCE: &'static str = "source";
 const ARG_NAME_OUTPUT: &'static str = "output";
 const ARG_NAME_KIND: &'static str = "kind";
 
+const VERSION: &'static str = "0.0.2";
+
 pub fn get_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name(COMMAND_NAME)
-        .version("0.0.2")
+        .version(VERSION)
         .about("Recursively package a directory structure into a BIG archive")
         .author("Taryn Hill <taryn@phrohdoh.com>")
         .arg(Arg::with_name(ARG_NAME_SOURCE)
@@ -44,7 +46,7 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
     let kind = args.value_of(ARG_NAME_KIND).unwrap();
     let kind = Kind::from_bytes(kind.as_bytes());
 
-    easage::pack_directory(&source, &output, kind, Some(b"easage0.0.1"))
+    easage::pack_directory(&source, &output, kind, Some(format!("easage{}", VERSION).as_bytes()))
 }
 
 fn validate_is_bigf_or_big4(v: String) -> Result<(), String> {
