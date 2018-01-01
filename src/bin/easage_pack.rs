@@ -11,7 +11,7 @@ const ARG_NAME_KIND: &'static str = "kind";
 
 pub fn get_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name(COMMAND_NAME)
-        .version("0.0.1")
+        .version("0.0.2")
         .about("Recursively package a directory structure into a BIG archive")
         .author("Taryn Hill <taryn@phrohdoh.com>")
         .arg(Arg::with_name(ARG_NAME_SOURCE)
