@@ -35,12 +35,17 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
     println!("  data start: 0x{:x}", archive.data_start()?);
 
     let table = archive.entry_metadata_table()?;
+    let mut entry_info = table.iter()
+        .map(|(name, entry)| (name, entry.offset, entry.len))
+        .collect::<Vec<_>>();
+
+    entry_info.sort_by(|e1, e2| (*e1.0).cmp(&e2.0));
 
     println!("Entries:");
-    for (name, entry) in table.iter() {
-        println!("  {}", name);
-        println!("    offset: 0x{:x}", entry.offset);
-        println!("    len: {}", entry.len);
+    for entry in entry_info {
+        println!("  {}", entry.0);
+        println!("    offset: 0x{:x}", entry.1);
+        println!("    len: {}", entry.2);
     }
 
     Ok(())
