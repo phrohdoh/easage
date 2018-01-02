@@ -1,7 +1,6 @@
-use ::std::io;
 use clap::{Arg, ArgMatches, App, SubCommand};
 
-use ::easage::{Kind, Archive};
+use ::easage::{Kind, Archive, LibResult};
 
 pub const COMMAND_NAME: &'static str = "list";
 const ARG_NAME: &'static str = "source";
@@ -20,7 +19,7 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .help("Path to the BIG to read."))
 }
 
-pub fn run(args: &ArgMatches) -> io::Result<()> {
+pub fn run(args: &ArgMatches) -> LibResult<()> {
     let path = args.value_of(ARG_NAME).unwrap();
     let mut archive = Archive::from_path(path)?;
 

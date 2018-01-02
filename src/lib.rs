@@ -9,6 +9,9 @@ use owning_ref::ArcRef;
 
 extern crate walkdir;
 
+#[macro_use(Fail)] extern crate failure;
+
+use std::error::Error;
 use std::collections::HashMap;
 use std::io::{self, BufRead, Seek,  SeekFrom};
 use std::ops::Deref;
@@ -17,6 +20,47 @@ use std::sync::Arc;
 
 mod writer;
 pub use writer::pack_directory;
+
+#[derive(Debug, Fail)]
+pub enum LibError {
+    #[fail(display = "Unable to find the path '{}'. Perhaps it does not exist or you do not have the required permissions.", path)]
+    PathNotFound {
+        path: String,
+    },
+
+    #[fail(display = "{}", message)]
+    Custom {
+        message: String,
+    },
+}
+
+impl From<std::io::Error> for LibError {
+    fn from(e: std::io::Error) -> Self {
+        match e.kind() {
+            _ => LibError::Custom { message: e.description().to_string() },
+        }
+    }
+}
+
+impl From<walkdir::Error> for LibError {
+    fn from(e: walkdir::Error) -> Self {
+        let path =  e.path()
+            .map(|ref_path| ref_path.to_string_lossy().to_string())
+            .unwrap_or(String::from("<unknown path>"));
+
+        LibError::PathNotFound { path }
+    }
+}
+
+//impl<T> From<std::io::IntoInnerError<T>> for LibError
+//    where T: std::error::Error + Send + std::fmt::Debug
+//{
+//    fn from(e: std::io::IntoInnerError<T>) -> Self {
+//        LibError::Custom { message: e.description().to_string() }
+//    }
+//}
+
+pub type LibResult<T> = Result<T, LibError>;
 
 #[derive(Debug, Clone)]
 pub enum Kind {

@@ -1,7 +1,10 @@
+use ::std::error::Error;
 use ::std::borrow::Cow;
 use ::std::fs::{File, OpenOptions};
 use ::std::io::{self, BufWriter, Write};
 use ::std::path::{Path, PathBuf};
+
+use ::{LibResult, LibError};
 
 use walkdir::WalkDir;
 use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
@@ -21,7 +24,7 @@ impl Entry {
     }
 }
 
-pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind) -> ::std::io::Result<()>
+pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind) -> LibResult<()>
     where P1: AsRef<Path>,
           P2: AsRef<Path> {
     let input_directory = input_directory.as_ref();
@@ -30,8 +33,8 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
     let mut entries = vec![];
 
     let mut total_size_of_entries = 0u32;
-    for entry in WalkDir::new(input_directory) {
-        let entry = entry?;
+    for entry_res in WalkDir::new(input_directory) {
+        let entry = entry_res?;
 
         let md = entry.metadata()?;
         if md.is_dir() {
@@ -96,7 +99,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
         io::copy(&mut f, &mut writer)?;
     }
 
-    let inner = writer.into_inner()?;
+    let inner = writer.into_inner().map_err(|e| LibError::Custom { message: e.description().to_string() })?;
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)

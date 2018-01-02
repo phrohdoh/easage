@@ -1,9 +1,9 @@
 use ::std::fs::{self, OpenOptions};
-use ::std::io::{self, Write};
+use ::std::io::Write;
 use ::std::path::PathBuf;
 use clap::{Arg, ArgMatches, App, SubCommand};
 
-use ::easage::Archive;
+use ::easage::{Archive, LibResult};
 
 pub const COMMAND_NAME: &'static str = "unpack";
 const ARG_NAME_SOURCE: &'static str = "source";
@@ -30,7 +30,7 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .help("Path to the directory that should contain the BIG archive's contents."))
 }
 
-pub fn run(args: &ArgMatches) -> io::Result<()> {
+pub fn run(args: &ArgMatches) -> LibResult<()> {
     let source = args.value_of(ARG_NAME_SOURCE).unwrap();
     let output = args.value_of(ARG_NAME_OUTPUT).unwrap();
     let output = PathBuf::from(output);

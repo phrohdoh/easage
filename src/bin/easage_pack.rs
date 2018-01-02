@@ -1,8 +1,7 @@
-use ::std::io;
 use ::std::path::PathBuf;
 use clap::{Arg, ArgMatches, App, SubCommand};
 
-use ::easage::{self, Kind};
+use ::easage::{self, Kind, LibResult};
 
 pub const COMMAND_NAME: &'static str = "pack";
 const ARG_NAME_SOURCE: &'static str = "source";
@@ -37,7 +36,7 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .help("BIG archive kind (BIGF or BIG4, case-sensitive)"))
 }
 
-pub fn run(args: &ArgMatches) -> io::Result<()> {
+pub fn run(args: &ArgMatches) -> LibResult<()> {
     let source = args.value_of(ARG_NAME_SOURCE).unwrap();
 
     let output = args.value_of(ARG_NAME_OUTPUT).unwrap();
