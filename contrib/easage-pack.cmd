@@ -13,6 +13,9 @@ rem Use wmic command to get current date information in YYYYMMDD format
 for /f %%# in ('wMIC Path Win32_LocalTime Get /Format:value') do @for /f %%@ in ("%%#") do @set %%@
 set "curdate=%year%%month%%day%"
 
+rem Set BIG target to pack for (BIG4 or BIGF)
+set kind=BIGF
+
 rem A prefix can be set for the output big files
 rem e.g. You may remove the date but keep the bangs
 rem
@@ -30,7 +33,7 @@ rem echo %prefix% & pause & exit
 :NotPacked
 if (%1) EQU () goto Packed
 echo Packing: "%~nx1" to "%prefix%%~n1.big"
-easage pack --source "%~nx1" --output "%prefix%%~n1.big"
+easage pack --kind %kind% --source "%~nx1" --output "%prefix%%~n1.big"
 shift
 goto NotPacked
 
