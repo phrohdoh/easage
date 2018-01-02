@@ -48,6 +48,9 @@ pub struct Archive {
     data: ArcRef<Mmap, [u8]>,
 }
 
+/// Functions with the `read` prefix actually perform a read from
+/// the memory-mapped archive. Typically you want to call these a single
+/// time and refer to the resulting values in the rest of your code.
 impl Archive {
     pub const HEADER_LEN: u32 = 16;
 
@@ -69,26 +72,26 @@ impl Archive {
         unimplemented!()
     }
 
-    pub fn kind(&self) -> Kind {
+    pub fn read_kind(&self) -> Kind {
         Kind::from_bytes(&self[0..4])
     }
 
-    pub fn size(&self) -> io::Result<u32> {
+    pub fn read_size(&self) -> io::Result<u32> {
         let mut values = &self[4..8];
         values.read_u32::<LittleEndian>()
     }
 
-    pub fn len(&self) -> io::Result<u32> {
+    pub fn read_len(&self) -> io::Result<u32> {
         let mut values = &self[8..12];
         values.read_u32::<BigEndian>()
     }
 
-    pub fn data_start(&self) -> io::Result<u32> {
+    pub fn read_data_start(&self) -> io::Result<u32> {
         let mut values = &self[12..16];
         values.read_u32::<BigEndian>()
     }
 
-    pub fn secret_data(&mut self) -> io::Result<Option<&[u8]>> {
+    pub fn read_secret_data(&mut self) -> io::Result<Option<&[u8]>> {
         let table = match self.entry_metadata_table() {
             Ok(t) => t,
             _ => return Ok(None)
@@ -100,7 +103,7 @@ impl Archive {
              e.name.len() + 1) as u32 // name + null
         ).sum::<u32>();
 
-        let data_start = self.data_start()? as usize;
+        let data_start = self.read_data_start()? as usize;
 
         let secret_data_offset = (Self::HEADER_LEN + table_size) as usize;
         if secret_data_offset == data_start {
@@ -113,8 +116,8 @@ impl Archive {
     /// Read the metadata table that lists the entries in this archive.
     /// You will need to pass the resulting table to `get_data_from_table`
     /// to retrieve actual entry data.
-    pub fn entry_metadata_table(&mut self) -> io::Result<EntryTable> {
-        let len = self.len()?;
+    pub fn read_entry_metadata_table(&mut self) -> io::Result<EntryTable> {
+        let len = self.read_len()?;
 
         let mut c = std::io::Cursor::new(&self[..]);
         c.seek(SeekFrom::Start(Self::HEADER_LEN as u64))?;
