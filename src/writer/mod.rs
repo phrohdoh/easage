@@ -45,6 +45,10 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
         entries.push(Entry::new(path, len));
     }
 
+    // TODO: Expose sort order as an option.
+    // The reasoning being one user may prefer alphanumeric order
+    // while another may want to store from smallest to largest.
+    // Example: The community-driven tool FinalBig orders by entry path.
     entries.sort_by(|a, b| a.len.cmp(&b.len));
 
     let table_size = calc_table_size(entries.iter());
