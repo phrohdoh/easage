@@ -48,6 +48,8 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
     entries.sort_by(|a, b| a.len.cmp(&b.len));
 
     let table_size = calc_table_size(entries.iter());
+
+    // NOTE: For some reason FinalBig's `data_start` is 1 byte less than ours.
     let data_start = ::Archive::HEADER_LEN + table_size + secret_data.map(|data| data.len()).unwrap_or(0) as u32;
 
     let kind_bytes = match kind {
@@ -66,10 +68,12 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
     writer.write_u32::<BigEndian>(data_start)?;
 
     // Write the entry metadata table
+    let mut last_offset = data_start;
     let mut last_len = 0u32;
+
     for entry in &entries {
         let len = entry.len;
-        let offset = data_start + last_len;
+        let offset = last_offset + last_len;
         let name_bytes = entry.path();
         let name_bytes = name_bytes.as_bytes();
 
@@ -78,6 +82,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
         writer.write(name_bytes)?;
         writer.write(&[b'\0'])?;
 
+        last_offset = offset;
         last_len = len;
     }
 
