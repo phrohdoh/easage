@@ -56,6 +56,7 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
                 .create(true)
                 .read(true)
                 .write(true)
+                .truncate(true)
                 .open(&output_file)?;
 
             f.write(data)?;
