@@ -46,7 +46,7 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
     let kind = args.value_of(ARG_NAME_KIND).unwrap();
     let kind = Kind::from_bytes(kind.as_bytes());
 
-    easage::pack_directory(&source, &output, kind, Some(format!("easage-pack{}", VERSION).as_bytes()))
+    easage::pack_directory(&source, &output, kind)
 }
 
 fn validate_is_bigf_or_big4(v: String) -> Result<(), String> {

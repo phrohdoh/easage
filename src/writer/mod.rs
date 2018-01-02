@@ -21,7 +21,7 @@ impl Entry {
     }
 }
 
-pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind, secret_data: Option<&[u8]>) -> ::std::io::Result<()> 
+pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind) -> ::std::io::Result<()>
     where P1: AsRef<Path>,
           P2: AsRef<Path> {
     let input_directory = input_directory.as_ref();
@@ -54,7 +54,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
     let table_size = calc_table_size(entries.iter());
 
     // NOTE: For some reason FinalBig's `data_start` is 1 byte less than ours.
-    let data_start = ::Archive::HEADER_LEN + table_size + secret_data.map(|data| data.len()).unwrap_or(0) as u32;
+    let data_start = ::Archive::HEADER_LEN + table_size;
 
     let kind_bytes = match kind {
         ::Kind::Big4 => "BIG4",
@@ -88,10 +88,6 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
 
         last_offset = offset;
         last_len = len;
-    }
-
-    if let Some(secret_data) = secret_data {
-        writer.write(secret_data)?;
     }
 
     // Write the actual data
