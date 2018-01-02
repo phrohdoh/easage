@@ -36,7 +36,7 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
     let output = PathBuf::from(output);
 
     let mut archive = Archive::from_path(source)?;
-    let table = archive.entry_metadata_table()?;
+    let table = archive.read_entry_metadata_table()?;
 
     for (entry_name, _entry) in &table {
         if let Some(data) = archive.get_bytes_via_table(&table, entry_name) {

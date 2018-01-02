@@ -24,7 +24,7 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
     let path = args.value_of(ARG_NAME).unwrap();
     let mut archive = Archive::from_path(path)?;
 
-    let kind = archive.kind();
+    let kind = archive.read_kind();
     if let Kind::Unknown(bytes) = kind {
         eprintln!("Unknown archive type {:?}. Aborting.", bytes);
         return Ok(());
@@ -32,10 +32,12 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
 
     println!("Archive:");
     println!("  kind: {:?}", kind);
-    println!("  size: {:?}", archive.size()?);
-    println!("  len: {:?}", archive.len()?);
+    println!("  size: {:?}", archive.read_size()?);
+    println!("  len: {:?}", archive.read_len()?);
 
-    if let Some(data) = archive.secret_data()? {
+    let table = archive.read_entry_metadata_table()?;
+
+    if let Some(data) = archive.read_secret_data(&table)? {
         if let Ok(s) = ::std::str::from_utf8(data) {
             println!("  secret data: {:#?}", s);
         }
@@ -43,9 +45,8 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
         println!("  secret data len: {}", data.len());
     }
 
-    println!("  data start: 0x{:x}", archive.data_start()?);
+    println!("  data start: 0x{:x}", archive.read_data_start()?);
 
-    let table = archive.entry_metadata_table()?;
     let mut entry_info = table.iter()
         .map(|(name, entry)| (name, entry.offset, entry.len))
         .collect::<Vec<_>>();
