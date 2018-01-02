@@ -34,6 +34,15 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
     println!("  kind: {:?}", kind);
     println!("  size: {:?}", archive.size()?);
     println!("  len: {:?}", archive.len()?);
+
+    if let Some(data) = archive.secret_data()? {
+        if let Ok(s) = ::std::str::from_utf8(data) {
+            println!("  secret data: {:#?}", s);
+        }
+
+        println!("  secret data len: {}", data.len());
+    }
+
     println!("  data start: 0x{:x}", archive.data_start()?);
 
     let table = archive.entry_metadata_table()?;

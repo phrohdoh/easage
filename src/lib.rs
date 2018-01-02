@@ -86,6 +86,28 @@ impl Archive {
         values.read_u32::<BigEndian>()
     }
 
+    pub fn secret_data(&mut self) -> io::Result<Option<&[u8]>> {
+        let table = match self.entry_metadata_table() {
+            Ok(t) => t,
+            _ => return Ok(None)
+        };
+
+        let table_size = table.iter().map(|(_k, e)|
+            (std::mem::size_of::<u32>() + // offset
+             std::mem::size_of::<u32>() + // length
+             e.name.len() + 1) as u32 // name + null
+        ).sum::<u32>();
+
+        let data_start = self.data_start()? as usize;
+
+        let secret_data_offset = (Self::HEADER_LEN + table_size) as usize;
+        if secret_data_offset == data_start {
+            return Ok(None);
+        }
+
+        Ok(Some(&self[secret_data_offset..data_start]))
+    }
+
     pub fn entry_metadata_table(&mut self) -> io::Result<HashMap<String, Entry>> {
         let len = self.len()?;
 
