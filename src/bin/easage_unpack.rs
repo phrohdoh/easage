@@ -37,10 +37,9 @@ pub fn run(args: &ArgMatches) -> io::Result<()> {
 
     let mut archive = Archive::from_path(source)?;
     let table = archive.entry_metadata_table()?;
-    let keys = table.keys().collect::<Vec<_>>();
 
-    for entry_name in keys {
-        if let Some(data) = archive.read_entry_by_name(entry_name) {
+    for (entry_name, _entry) in &table {
+        if let Some(data) = archive.get_bytes_via_table(&table, entry_name) {
             let output_file = {
                 let mut o = output.clone();
                 o.push(entry_name.replace("\\", "/"));

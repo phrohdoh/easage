@@ -35,6 +35,8 @@ impl Kind {
     }
 }
 
+type EntryTable = HashMap<String, Entry>;
+
 #[derive(Debug)]
 pub struct Entry {
     pub offset: u32,
@@ -108,13 +110,16 @@ impl Archive {
         Ok(Some(&self[secret_data_offset..data_start]))
     }
 
-    pub fn entry_metadata_table(&mut self) -> io::Result<HashMap<String, Entry>> {
+    /// Read the metadata table that lists the entries in this archive.
+    /// You will need to pass the resulting table to `get_data_from_table`
+    /// to retrieve actual entry data.
+    pub fn entry_metadata_table(&mut self) -> io::Result<EntryTable> {
         let len = self.len()?;
 
         let mut c = std::io::Cursor::new(&self[..]);
         c.seek(SeekFrom::Start(Self::HEADER_LEN as u64))?;
 
-        let mut table = HashMap::new();
+        let mut table = EntryTable::new();
 
         for _ in 0..len {
             let offset = c.read_u32::<BigEndian>()?;
@@ -133,13 +138,7 @@ impl Archive {
         Ok(table)
     }
 
-    pub fn read_entry_by_name(&mut self, name: &str) -> Option<&[u8]> {
-        // TODO: Bubble up error.
-        let table = match self.entry_metadata_table() {
-            Ok(t) => t,
-            _ => return None
-        };
-
+    pub fn get_bytes_via_table(&mut self, table: &EntryTable, name: &str) -> Option<&[u8]> {
         match table.get(name) {
             Some(entry) => {
                 let start = entry.offset as usize;
