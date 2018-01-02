@@ -37,6 +37,10 @@ pub enum LibError {
 impl From<std::io::Error> for LibError {
     fn from(e: std::io::Error) -> Self {
         match e.kind() {
+            std::io::ErrorKind::NotFound => LibError::Custom {
+                message: e.cause().map(|err| err.description().to_string())
+                    .unwrap_or(String::from("A path was not found"))
+            },
             _ => LibError::Custom { message: e.description().to_string() },
         }
     }

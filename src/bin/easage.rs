@@ -25,10 +25,15 @@ fn main() {
         .subcommand(unpack::get_command())
         .get_matches();
 
-    match matches.subcommand() {
+    let run_result = match matches.subcommand() {
         (list::COMMAND_NAME, Some(args)) => list::run(args),
         (pack::COMMAND_NAME, Some(args)) => pack::run(args),
         (unpack::COMMAND_NAME, Some(args)) => unpack::run(args),
         _ => Ok(()),
     };
+
+    if let Err(err) = run_result {
+        eprintln!("ERROR: {}", err);
+        std::process::exit(1);
+    }
 }

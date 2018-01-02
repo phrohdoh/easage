@@ -10,21 +10,21 @@ use walkdir::WalkDir;
 use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
 
 struct Entry {
-    path: PathBuf,
+    source_path: PathBuf,
     len: u32,
 }
 
 impl Entry {
-    pub fn new(path: PathBuf, len: u32) -> Self {
-        Self { path, len }
+    pub fn new(source_path: PathBuf, len: u32) -> Self {
+        Self { source_path, len }
     }
 
-    fn path(&self) -> Cow<str> {
-        self.path.to_string_lossy()
+    fn source_path_lossy(&self) -> Cow<str> {
+        self.source_path.to_string_lossy()
     }
 }
 
-pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind) -> LibResult<()>
+pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind, strip_prefix: Option<&str>) -> LibResult<()>
     where P1: AsRef<Path>,
           P2: AsRef<Path> {
     let input_directory = input_directory.as_ref();
@@ -41,11 +41,15 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
             continue;
         }
 
-        let path = entry.path().to_path_buf();
+        let path = entry.path();
         let len = md.len() as u32;
         total_size_of_entries += len;
 
-        entries.push(Entry::new(path, len));
+        entries.push(Entry::new(path.to_path_buf(), len));
+    }
+
+    if entries.len() == 0 {
+        return Err(LibError::Custom { message: String::from("Found no files to pack") });
     }
 
     // TODO: Expose sort order as an option.
@@ -81,12 +85,20 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
     for entry in &entries {
         let len = entry.len;
         let offset = last_offset + last_len;
-        let name_bytes = entry.path();
-        let name_bytes = name_bytes.as_bytes();
+
+        let mut path = entry.source_path_lossy().to_string();
+
+        if let Some(strip_prefix) = strip_prefix {
+            if path.starts_with(strip_prefix) {
+                path = path.trim_left_matches(strip_prefix).to_string();
+            }
+        }
+
+        let path_bytes = path.as_bytes();
 
         writer.write_u32::<BigEndian>(offset)?;
         writer.write_u32::<BigEndian>(len as u32)?;
-        writer.write(name_bytes)?;
+        writer.write(path_bytes)?;
         writer.write(&[b'\0'])?;
 
         last_offset = offset;
@@ -95,7 +107,10 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
 
     // Write the actual data
     for entry in entries {
-        let mut f = File::open(entry.path)?;
+        let mut f = File::open(&entry.source_path).map_err(|_e|
+            LibError::Custom { message: format!("Failed to open file {:?} for reading.", entry.source_path)
+        })?;
+
         io::copy(&mut f, &mut writer)?;
     }
 
@@ -119,5 +134,5 @@ fn calc_table_size<'e, I: Iterator<Item=&'e Entry>>(entries: I) -> u32 {
 fn table_record_size(e: &Entry) -> u32 {
     (::std::mem::size_of::<u32>() + // offset
      ::std::mem::size_of::<u32>() + // length
-     e.path().len() + 1) as u32 // name + null
+     e.source_path_lossy().len() + 1) as u32 // name + null
 }

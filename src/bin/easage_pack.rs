@@ -7,6 +7,7 @@ pub const COMMAND_NAME: &'static str = "pack";
 const ARG_NAME_SOURCE: &'static str = "source";
 const ARG_NAME_OUTPUT: &'static str = "output";
 const ARG_NAME_KIND: &'static str = "kind";
+const ARG_NAME_STRIP_PREFIX: &'static str = "strip-prefix";
 
 const VERSION: &'static str = "0.0.2";
 
@@ -34,6 +35,11 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .required(true)
                 .validator(validate_is_bigf_or_big4)
                 .help("BIG archive kind (BIGF or BIG4, case-sensitive)"))
+        .arg(Arg::with_name(ARG_NAME_STRIP_PREFIX)
+                .long(ARG_NAME_STRIP_PREFIX)
+                .value_name(ARG_NAME_STRIP_PREFIX)
+                .takes_value(true)
+                .help("A path prefix to strip from entry names"))
 }
 
 pub fn run(args: &ArgMatches) -> LibResult<()> {
@@ -45,7 +51,9 @@ pub fn run(args: &ArgMatches) -> LibResult<()> {
     let kind = args.value_of(ARG_NAME_KIND).unwrap();
     let kind = Kind::from_bytes(kind.as_bytes());
 
-    easage::pack_directory(&source, &output, kind)
+    let strip_prefix = args.value_of(ARG_NAME_STRIP_PREFIX);
+
+    easage::pack_directory(&source, &output, kind, strip_prefix)
 }
 
 fn validate_is_bigf_or_big4(v: String) -> Result<(), String> {
