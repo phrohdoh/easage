@@ -55,7 +55,11 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
     let strip_prefix = args.value_of(ARG_NAME_STRIP_PREFIX)
         .map(|s| s.to_string());
 
-    let settings = packer::Settings { strip_prefix };
+    let settings = packer::Settings {
+        entry_order_criteria: packer::EntryOrderCriteria::SmallestToLargest,
+        strip_prefix
+    };
+
     packer::pack_directory(&source, &output, kind, settings)
         .map_err(|e| CliError::PackArchive { message: format!("{}", e) })
 }

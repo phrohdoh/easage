@@ -9,7 +9,13 @@ use ::{LibResult, LibError};
 use walkdir::WalkDir;
 use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
 
+pub enum EntryOrderCriteria {
+    SmallestToLargest,
+    Path,
+}
+
 pub struct Settings {
+    pub entry_order_criteria: EntryOrderCriteria,
     pub strip_prefix: Option<String>,
 }
 
@@ -42,11 +48,10 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
         return Err(LibError::Custom { message: String::from("Found no files to pack") });
     }
 
-    // TODO: Expose sort order as an option.
-    // The reasoning being one user may prefer alphanumeric order
-    // while another may want to store from smallest to largest.
-    // Example: The community-driven tool FinalBig orders by entry path.
-    entries.sort_by(|a, b| a.len.cmp(&b.len));
+    match settings.entry_order_criteria {
+        EntryOrderCriteria::SmallestToLargest => entries.sort_by(|a, b| a.len.cmp(&b.len)),
+        EntryOrderCriteria::Path => entries.sort_by(|a, b| a.source_path.cmp(&b.source_path)),
+    };
 
     let table_size = calc_table_size(entries.iter());
 
