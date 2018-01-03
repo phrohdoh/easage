@@ -1,0 +1,6 @@
+/target/
+**/*.rs.bk
+Cargo.lock
+test_data/*
+!test_data/.gitkeep
+*.big
