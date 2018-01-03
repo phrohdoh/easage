@@ -1,7 +1,7 @@
 use ::std::path::PathBuf;
 use clap::{Arg, ArgMatches, App, SubCommand};
 
-use ::lib::{self, Kind};
+use ::lib::{Kind, packer};
 use ::{CliResult, CliError};
 
 pub const COMMAND_NAME: &'static str = "pack";
@@ -52,9 +52,11 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
     let kind = args.value_of(ARG_NAME_KIND).unwrap();
     let kind = Kind::from_bytes(kind.as_bytes());
 
-    let strip_prefix = args.value_of(ARG_NAME_STRIP_PREFIX);
+    let strip_prefix = args.value_of(ARG_NAME_STRIP_PREFIX)
+        .map(|s| s.to_string());
 
-    lib::pack_directory(&source, &output, kind, strip_prefix)
+    let settings = packer::Settings { strip_prefix };
+    packer::pack_directory(&source, &output, kind, settings)
         .map_err(|e| CliError::PackArchive { message: format!("{}", e) })
 }
 

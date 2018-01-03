@@ -9,8 +9,12 @@ use ::{LibResult, LibError};
 use walkdir::WalkDir;
 use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
 
+pub struct Settings {
+    pub strip_prefix: Option<String>,
+}
+
 /// Note: If you pass `Kind::Unknown(..)` to this function it will return a `LibResult::Err(LibError::InvalidKind)`.
-pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind, strip_prefix: Option<&str>) -> LibResult<()>
+pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind, settings: Settings) -> LibResult<()>
     where P1: AsRef<Path>,
           P2: AsRef<Path> {
     let input_directory = input_directory.as_ref();
@@ -74,7 +78,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
 
         let mut path = entry.source_path_lossy().to_string();
 
-        if let Some(strip_prefix) = strip_prefix {
+        if let Some(ref strip_prefix) = settings.strip_prefix {
             if path.starts_with(strip_prefix) {
                 path = path.trim_left_matches(strip_prefix).to_string();
             }

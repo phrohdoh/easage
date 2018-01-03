@@ -18,8 +18,7 @@ use std::ops::Deref;
 use std::path::Path;
 use std::sync::Arc;
 
-mod packer;
-pub use packer::pack_directory;
+pub mod packer;
 
 #[derive(Debug, Fail)]
 pub enum LibError {
