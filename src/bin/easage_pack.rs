@@ -9,7 +9,7 @@ const ARG_NAME_OUTPUT: &'static str = "output";
 const ARG_NAME_KIND: &'static str = "kind";
 const ARG_NAME_STRIP_PREFIX: &'static str = "strip-prefix";
 
-const VERSION: &'static str = "0.0.2";
+const VERSION: &'static str = "0.0.3";
 
 pub fn get_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name(COMMAND_NAME)

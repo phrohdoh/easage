@@ -2,7 +2,7 @@
 authors = ["Taryn Hill <taryn@phrohdoh.com>"]
 license = "MIT"
 name = "easage"
-version = "0.0.2"
+version = "0.0.3"
 
 [[bin]]
 doc = false

@@ -12,7 +12,7 @@ use easage_list as list;
 mod easage_pack;
 use easage_pack as pack;
 
-const VERSION: &'static str = "0.0.2";
+const VERSION: &'static str = "0.0.3";
 
 fn main() {
     let matches = App::new("easage")
