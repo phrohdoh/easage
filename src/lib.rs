@@ -56,14 +56,6 @@ impl From<walkdir::Error> for LibError {
     }
 }
 
-//impl<T> From<std::io::IntoInnerError<T>> for LibError
-//    where T: std::error::Error + Send + std::fmt::Debug
-//{
-//    fn from(e: std::io::IntoInnerError<T>) -> Self {
-//        LibError::Custom { message: e.description().to_string() }
-//    }
-//}
-
 pub type LibResult<T> = Result<T, LibError>;
 
 #[derive(Debug, Clone)]
