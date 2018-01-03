@@ -3,7 +3,8 @@ use ::std::io::Write;
 use ::std::path::PathBuf;
 use clap::{Arg, ArgMatches, App, SubCommand};
 
-use ::easage::{Archive, LibResult};
+use ::lib::Archive;
+use ::{CliResult, CliError};
 
 pub const COMMAND_NAME: &'static str = "unpack";
 const ARG_NAME_SOURCE: &'static str = "source";
@@ -30,7 +31,7 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .help("Path to the directory that should contain the BIG archive's contents."))
 }
 
-pub fn run(args: &ArgMatches) -> LibResult<()> {
+pub fn run(args: &ArgMatches) -> CliResult<()> {
     let source = args.value_of(ARG_NAME_SOURCE).unwrap();
     let output = args.value_of(ARG_NAME_OUTPUT).unwrap();
     let output = PathBuf::from(output);
@@ -46,8 +47,10 @@ pub fn run(args: &ArgMatches) -> LibResult<()> {
                 o
             };
 
-            // TODO: We need our own error type for this case.
-            let output_dir = output_file.parent().unwrap();
+            let output_dir = output_file.parent()
+                .ok_or(CliError::Custom {
+                    message: format!("Parent directory for output file {} could not be found.", output_file.display())
+                })?;
 
             let _ = fs::create_dir_all(&output_dir);
 

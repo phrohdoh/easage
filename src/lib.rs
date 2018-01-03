@@ -28,6 +28,9 @@ pub enum LibError {
         path: String,
     },
 
+    #[fail(display = "The archive kind you gave is invalid in this scenario")]
+    InvalidKind,
+
     #[fail(display = "{}", message)]
     Custom {
         message: String,
@@ -39,7 +42,7 @@ impl From<std::io::Error> for LibError {
         match e.kind() {
             std::io::ErrorKind::NotFound => LibError::Custom {
                 message: e.cause().map(|err| err.description().to_string())
-                    .unwrap_or(String::from("A path was not found"))
+                    .unwrap_or(String::from("A path was not found (exactly which path is currently unknown)"))
             },
             _ => LibError::Custom { message: e.description().to_string() },
         }

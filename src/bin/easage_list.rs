@@ -1,6 +1,7 @@
 use clap::{Arg, ArgMatches, App, SubCommand};
 
-use ::easage::{Kind, Archive, LibResult};
+use ::lib::{Kind, Archive};
+use ::CliResult;
 
 pub const COMMAND_NAME: &'static str = "list";
 const ARG_NAME: &'static str = "source";
@@ -19,7 +20,7 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .help("Path to the BIG to read."))
 }
 
-pub fn run(args: &ArgMatches) -> LibResult<()> {
+pub fn run(args: &ArgMatches) -> CliResult<()> {
     let path = args.value_of(ARG_NAME).unwrap();
     let mut archive = Archive::from_path(path)?;
 

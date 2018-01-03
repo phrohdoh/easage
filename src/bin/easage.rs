@@ -1,7 +1,11 @@
+use std::error::Error;
+
 extern crate clap;
 use clap::{App, AppSettings};
 
-extern crate easage;
+extern crate easage as lib;
+
+#[macro_use] extern crate failure;
 
 mod easage_unpack;
 use easage_unpack as unpack;
@@ -13,6 +17,38 @@ mod easage_pack;
 use easage_pack as pack;
 
 const VERSION: &'static str = "0.0.3";
+
+#[derive(Debug, Fail)]
+pub enum CliError {
+    #[fail(display = "Failed to pack the given directory: {}", message)]
+    PackArchive {
+        message: String,
+    },
+
+    #[fail(display = "Encountered an I/O error: {}", message)]
+    GeneralIoError {
+        message: String,
+    },
+
+    #[fail(display = "{}", message)]
+    Custom {
+        message: String,
+    },
+}
+
+impl From<lib::LibError> for CliError {
+    fn from(e: lib::LibError) -> Self {
+        CliError::Custom { message: format!("{}", e) }
+    }
+}
+
+impl From<::std::io::Error> for CliError {
+    fn from(e: ::std::io::Error) -> Self {
+        CliError::GeneralIoError { message: e.description().to_string() }
+    }
+}
+
+pub type CliResult<T> = Result<T, CliError>;
 
 fn main() {
     let matches = App::new("easage")

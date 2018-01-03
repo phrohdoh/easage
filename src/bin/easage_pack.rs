@@ -1,7 +1,8 @@
 use ::std::path::PathBuf;
 use clap::{Arg, ArgMatches, App, SubCommand};
 
-use ::easage::{self, Kind, LibResult};
+use ::lib::{self, Kind};
+use ::{CliResult, CliError};
 
 pub const COMMAND_NAME: &'static str = "pack";
 const ARG_NAME_SOURCE: &'static str = "source";
@@ -42,7 +43,7 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .help("A path prefix to strip from entry names"))
 }
 
-pub fn run(args: &ArgMatches) -> LibResult<()> {
+pub fn run(args: &ArgMatches) -> CliResult<()> {
     let source = args.value_of(ARG_NAME_SOURCE).unwrap();
 
     let output = args.value_of(ARG_NAME_OUTPUT).unwrap();
@@ -53,7 +54,8 @@ pub fn run(args: &ArgMatches) -> LibResult<()> {
 
     let strip_prefix = args.value_of(ARG_NAME_STRIP_PREFIX);
 
-    easage::pack_directory(&source, &output, kind, strip_prefix)
+    lib::pack_directory(&source, &output, kind, strip_prefix)
+        .map_err(|e| CliError::PackArchive { message: format!("{}", e) })
 }
 
 fn validate_is_bigf_or_big4(v: String) -> Result<(), String> {

@@ -24,6 +24,7 @@ impl Entry {
     }
 }
 
+/// Note: If you pass `Kind::Unknown(..)` to this function it will return a `LibResult::Err(LibError::InvalidKind)`.
 pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind, strip_prefix: Option<&str>) -> LibResult<()>
     where P1: AsRef<Path>,
           P2: AsRef<Path> {
@@ -66,7 +67,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
     let kind_bytes = match kind {
         ::Kind::Big4 => "BIG4",
         ::Kind::BigF => "BIGF",
-        _ => panic!("TODO: Return an error if called with Kind::Unknown")
+        _ => return Err(LibError::InvalidKind),
     }.as_bytes();
 
     let buf = Vec::with_capacity(data_start as usize);
