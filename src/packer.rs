@@ -9,21 +9,6 @@ use ::{LibResult, LibError};
 use walkdir::WalkDir;
 use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
 
-struct Entry {
-    source_path: PathBuf,
-    len: u32,
-}
-
-impl Entry {
-    pub fn new(source_path: PathBuf, len: u32) -> Self {
-        Self { source_path, len }
-    }
-
-    fn source_path_lossy(&self) -> Cow<str> {
-        self.source_path.to_string_lossy()
-    }
-}
-
 /// Note: If you pass `Kind::Unknown(..)` to this function it will return a `LibResult::Err(LibError::InvalidKind)`.
 pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind, strip_prefix: Option<&str>) -> LibResult<()>
     where P1: AsRef<Path>,
@@ -126,6 +111,21 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
     file.write_all(&inner)?;
 
     Ok(())
+}
+
+struct Entry {
+    source_path: PathBuf,
+    len: u32,
+}
+
+impl Entry {
+    fn new(source_path: PathBuf, len: u32) -> Self {
+        Self { source_path, len }
+    }
+
+    fn source_path_lossy(&self) -> Cow<str> {
+        self.source_path.to_string_lossy()
+    }
 }
 
 fn calc_table_size<'e, I: Iterator<Item=&'e Entry>>(entries: I) -> u32 {
