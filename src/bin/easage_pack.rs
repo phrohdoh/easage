@@ -9,6 +9,10 @@ const ARG_NAME_SOURCE: &'static str = "source";
 const ARG_NAME_OUTPUT: &'static str = "output";
 const ARG_NAME_KIND: &'static str = "kind";
 const ARG_NAME_STRIP_PREFIX: &'static str = "strip-prefix";
+const ARG_NAME_ORDER: &'static str = "order";
+
+const ARG_VALUE_ORDER_SMALLEST_TO_LARGEST: &'static str = "smallest-to-largest";
+const ARG_VALUE_ORDER_PATH: &'static str = "path";
 
 const VERSION: &'static str = "0.0.3";
 
@@ -34,13 +38,21 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .value_name(ARG_NAME_KIND)
                 .takes_value(true)
                 .required(true)
-                .validator(validate_is_bigf_or_big4)
+                .validator(validate_kind)
                 .help("BIG archive kind (BIGF or BIG4, case-sensitive)"))
         .arg(Arg::with_name(ARG_NAME_STRIP_PREFIX)
                 .long(ARG_NAME_STRIP_PREFIX)
                 .value_name(ARG_NAME_STRIP_PREFIX)
                 .takes_value(true)
                 .help("A path prefix to strip from entry names"))
+        .arg(Arg::with_name(ARG_NAME_ORDER)
+                .long(ARG_NAME_ORDER)
+                .value_name(ARG_NAME_ORDER)
+                .takes_value(true)
+                .default_value(ARG_VALUE_ORDER_PATH)
+                .validator(validate_order)
+                .possible_values(&[ARG_VALUE_ORDER_SMALLEST_TO_LARGEST, ARG_VALUE_ORDER_PATH])
+                .help("The criteria used to determine entry order in the archive"))
 }
 
 pub fn run(args: &ArgMatches) -> CliResult<()> {
@@ -55,16 +67,49 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
     let strip_prefix = args.value_of(ARG_NAME_STRIP_PREFIX)
         .map(|s| s.to_string());
 
+    let entry_order_criteria = args.value_of(ARG_NAME_ORDER)
+        .map(arg_order_to_enum)
+        .unwrap();
+
     let settings = packer::Settings {
-        entry_order_criteria: packer::EntryOrderCriteria::SmallestToLargest,
-        strip_prefix
+        entry_order_criteria,
+        strip_prefix,
     };
 
     packer::pack_directory(&source, &output, kind, settings)
         .map_err(|e| CliError::PackArchive { message: format!("{}", e) })
 }
 
-fn validate_is_bigf_or_big4(v: String) -> Result<(), String> {
+fn arg_order_to_enum(input: &str) -> packer::EntryOrderCriteria {
+    match input {
+        ARG_VALUE_ORDER_SMALLEST_TO_LARGEST => packer::EntryOrderCriteria::SmallestToLargest,
+        ARG_VALUE_ORDER_PATH => packer::EntryOrderCriteria::Path,
+        _  => {
+            eprintln!(r#"
+Unexpected error!
+Please contact an author of this tool and provide the following text:
+
+Invalid input to 'arg_order_to_enum': {:?}
+Did you validate input via 'validate_order'?
+"#, input);
+
+            ::std::process::exit(1);
+        },
+    }
+}
+
+fn validate_order(v: String) -> Result<(), String> {
+    if v == ARG_VALUE_ORDER_SMALLEST_TO_LARGEST || v == ARG_VALUE_ORDER_PATH {
+        Ok(())
+    } else {
+        Err(format!("{} must be one of '{}' or '{}'",
+            ARG_NAME_ORDER,
+            ARG_VALUE_ORDER_SMALLEST_TO_LARGEST,
+            ARG_VALUE_ORDER_PATH))
+    }
+}
+
+fn validate_kind(v: String) -> Result<(), String> {
     if v != "BIG4" && v != "BIGF" {
         Err(format!("{} must be one of 'BIGF' or 'BIG4'", ARG_NAME_KIND))
     } else {
