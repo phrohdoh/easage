@@ -1,5 +1,4 @@
 use ::std::error::Error;
-use ::std::borrow::Cow;
 use ::std::fs::{File, OpenOptions};
 use ::std::io::{self, BufWriter, Write};
 use ::std::path::{Path, PathBuf};
