@@ -41,7 +41,17 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
         let len = md.len() as u32;
         total_size_of_entries += len;
 
-        entries.push(Entry::new(path.to_path_buf(), len));
+        let source_path = path.to_path_buf();
+
+        let mut output_filepath = source_path.to_string_lossy().to_string();
+
+        if let Some(ref strip_prefix) = settings.strip_prefix {
+            if output_filepath.starts_with(strip_prefix) {
+                output_filepath = output_filepath.trim_left_matches(strip_prefix).to_string();
+            }
+        }
+
+        entries.push(Entry::new(source_path, output_filepath, len));
     }
 
     if entries.len() == 0 {
@@ -81,15 +91,7 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
         let len = entry.len;
         let offset = last_offset + last_len;
 
-        let mut path = entry.source_path_lossy().to_string();
-
-        if let Some(ref strip_prefix) = settings.strip_prefix {
-            if path.starts_with(strip_prefix) {
-                path = path.trim_left_matches(strip_prefix).to_string();
-            }
-        }
-
-        let path_bytes = path.as_bytes();
+        let path_bytes = entry.output_filepath.as_bytes();
 
         writer.write_u32::<BigEndian>(offset)?;
         writer.write_u32::<BigEndian>(len as u32)?;
@@ -124,16 +126,13 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
 
 struct Entry {
     source_path: PathBuf,
+    output_filepath: String,
     len: u32,
 }
 
 impl Entry {
-    fn new(source_path: PathBuf, len: u32) -> Self {
-        Self { source_path, len }
-    }
-
-    fn source_path_lossy(&self) -> Cow<str> {
-        self.source_path.to_string_lossy()
+    fn new(source_path: PathBuf, output_filepath: String, len: u32) -> Self {
+        Self { source_path, output_filepath, len }
     }
 }
 
@@ -144,5 +143,5 @@ fn calc_table_size<'e, I: Iterator<Item=&'e Entry>>(entries: I) -> u32 {
 fn table_record_size(e: &Entry) -> u32 {
     (::std::mem::size_of::<u32>() + // offset
      ::std::mem::size_of::<u32>() + // length
-     e.source_path_lossy().len() + 1) as u32 // name + null
+     e.output_filepath.len() + 1) as u32 // name + null
 }
