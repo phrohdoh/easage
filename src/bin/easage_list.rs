@@ -7,7 +7,7 @@ pub const COMMAND_NAME: &'static str = "list";
 const ARG_NAME: &'static str = "source";
 const ARG_NAME_VERBOSE: &'static str = "verbose";
 
-const VERSION: &'static str = "0.0.1";
+const VERSION: &'static str = "0.0.2";
 
 pub fn get_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name(COMMAND_NAME)
