@@ -1,8 +1,10 @@
-use ::std::path::PathBuf;
 use clap::{Arg, ArgMatches, App, SubCommand};
 
 use ::lib::{Kind, packer};
 use ::{CliResult, CliError};
+
+use ::std::fs::OpenOptions;
+use ::std::io::Write;
 
 pub const COMMAND_NAME: &'static str = "pack";
 const ARG_NAME_SOURCE: &'static str = "source";
@@ -59,7 +61,6 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
     let source = args.value_of(ARG_NAME_SOURCE).unwrap();
 
     let output = args.value_of(ARG_NAME_OUTPUT).unwrap();
-    let output = PathBuf::from(output);
 
     let kind = args.value_of(ARG_NAME_KIND).unwrap();
     let kind = Kind::from_bytes(kind.as_bytes());
@@ -76,8 +77,19 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
         strip_prefix,
     };
 
-    packer::pack_directory(&source, &output, kind, settings)
-        .map_err(|e| CliError::PackArchive { message: format!("{}", e) })
+    let mut buf = vec![];
+
+    packer::pack_directory(&source, &mut buf, kind, settings)
+        .map_err(|e| CliError::PackArchive { message: format!("{}", e) })?;
+
+    let mut file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(output)?;
+
+    Ok(file.write_all(&buf)?)
 }
 
 fn arg_order_to_enum(input: &str) -> packer::EntryOrderCriteria {

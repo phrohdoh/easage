@@ -1,5 +1,4 @@
-use ::std::error::Error;
-use ::std::fs::{File, OpenOptions};
+use ::std::fs::File;
 use ::std::io::{self, BufWriter, Write};
 use ::std::path::{Path, PathBuf};
 
@@ -19,11 +18,10 @@ pub struct Settings {
 }
 
 /// Note: If you pass `Kind::Unknown(..)` to this function it will return a `LibResult::Err(LibError::InvalidKind)`.
-pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::Kind, settings: Settings) -> LibResult<()>
-    where P1: AsRef<Path>,
-          P2: AsRef<Path> {
+pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, kind: ::Kind, settings: Settings) -> LibResult<()>
+    where P: AsRef<Path>,
+          W: Write {
     let input_directory = input_directory.as_ref();
-    let output_filepath = output_filepath.as_ref();
 
     let mut entries = vec![];
 
@@ -73,7 +71,6 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
         _ => return Err(LibError::InvalidKind),
     }.as_bytes();
 
-    let buf = Vec::with_capacity(data_start as usize);
     let mut writer = BufWriter::new(buf);
 
     // Write the header
@@ -109,16 +106,6 @@ pub fn pack_directory<P1, P2>(input_directory: P1, output_filepath: P2, kind: ::
 
         io::copy(&mut f, &mut writer)?;
     }
-
-    let inner = writer.into_inner().map_err(|e| LibError::Custom { message: e.description().to_string() })?;
-    let mut file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(output_filepath)?;
-
-    file.write_all(&inner)?;
 
     Ok(())
 }
