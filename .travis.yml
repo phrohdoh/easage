@@ -22,13 +22,6 @@ jobs:
   include:
     - stage: lint
       rust: nightly-2018-01-01
-      env: rustfmt
-      before_install:
-        - if ! cargo +$NIGHTLY fmt --version | grep -q $RUSTFMT; then travis_wait cargo +$NIGHTLY install rustfmt-nightly --force --vers $RUSTFMT; fi
-      script:
-        - cargo +$NIGHTLY fmt -- --write-mode=diff
-    - stage: lint
-      rust: nightly-2018-01-01
       env: clippy
       before_install:
         - if [[ `cargo +$NIGHTLY clippy -- --version` != $CLIPPY* ]] ; then travis_wait cargo +$NIGHTLY install clippy --force --vers $CLIPPY; fi
