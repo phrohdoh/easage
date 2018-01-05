@@ -33,7 +33,7 @@ rem echo %prefix% & pause & exit
 :NotPacked
 if (%1) EQU () goto Packed
 echo Packing: "%~nx1" to "%prefix%%~n1.big"
-easage pack --kind %kind% --source "%~nx1" --output "%prefix%%~n1.big"
+easage pack --kind %kind% --strip-prefix "%~nx1\\" --source "%~nx1" --output "%prefix%%~n1.big"
 shift
 goto NotPacked
 
