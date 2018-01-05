@@ -1,0 +1,49 @@
+# Based on the "trust" template v0.1.1
+# https://github.com/japaric/trust/tree/v0.1.1
+
+environment:
+  global:
+    RUST_VERSION: stable
+    CRATE_NAME: easage
+    FEATURES: clap
+    TARGET: x86_64-pc-windows-msvc
+
+install:
+  - curl -sSf -o rustup-init.exe https://win.rustup.rs/
+  - rustup-init.exe -y --default-host %TARGET% --default-toolchain %RUST_VERSION%
+  - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - rustc -Vv
+  - cargo -V
+
+test_script:
+  # we don't run the "test phase" when doing deploys
+  - if [%APPVEYOR_REPO_TAG%]==[false] (
+      cargo test --features "%FEATURES%" --target %TARGET%
+    )
+
+before_deploy:
+  - cargo rustc --features "%FEATURES%" --target %TARGET% --bin %CRATE_NAME% --release -- -C lto
+  - ps: ci\before_deploy.ps1
+
+deploy:
+  artifact: /.*\.zip/
+  auth_token: "%GH_DEPLOY_API_KEY%"
+  description: ''
+  on:
+    RUST_VERSION: stable
+    appveyor_repo_tag: true
+  provider: GitHub
+
+cache:
+  - C:\Users\appveyor\.cargo\registry
+  - target
+
+branches:
+  only:
+    # Release tags
+    - /^v\d+\.\d+\.\d+.*$/
+    - master
+    - ci-test
+
+# Building is done in the test phase, so we disable Appveyor's build phase.
+build: false

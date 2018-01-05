@@ -1,0 +1,61 @@
+language: rust
+
+env:
+  global:
+    - CRATE_NAME=easage
+    - FEATURES=clap
+    # 'rust:' statements in lint stage also need to be modified
+    - NIGHTLY=nightly-2018-01-01
+    - RUSTFMT=0.3.4
+    - CLIPPY=0.0.177
+
+stages:
+  - name: lint
+    if: tag IS blank
+  - name: test
+    if: tag IS blank
+  - name: deploy
+    if: tag IS present
+
+jobs:
+  fast_finish: true
+  include:
+    - stage: lint
+      rust: nightly-2018-01-01
+      env: rustfmt
+      before_install:
+        - if ! cargo +$NIGHTLY fmt --version | grep -q $RUSTFMT; then travis_wait cargo +$NIGHTLY install rustfmt-nightly --force --vers $RUSTFMT; fi
+      script:
+        - cargo +$NIGHTLY fmt -- --write-mode=diff
+    - stage: lint
+      rust: nightly-2018-01-01
+      env: clippy
+      before_install:
+        - if [[ `cargo +$NIGHTLY clippy -- --version` != $CLIPPY* ]] ; then travis_wait cargo +$NIGHTLY install clippy --force --vers $CLIPPY; fi
+      script:
+        - cargo +$NIGHTLY clippy --features "$FEATURES" -- -D warnings
+    - stage: test
+      script:
+        - cargo test --features "$FEATURES"
+    - stage: deploy
+      env: TARGET=x86_64-unknown-linux-gnu
+      script: sh ci/before_deploy.sh
+      deploy:
+        provider: releases
+        api_key: $GH_DEPLOY_API_KEY
+        file_glob: true
+        file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
+        on:
+          tags: true
+        skip_cleanup: true
+  allow_failures:
+    - rust: nightly-2018-01-01
+
+cache:
+  directories:
+    - $HOME/.cargo
+    - target/debug/deps
+    - target/debug/build
+before_cache:
+    # Make sure all files are readable by "others" for caching
+    - chmod -R a+r $HOME/.cargo
