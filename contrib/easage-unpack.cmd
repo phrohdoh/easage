@@ -22,10 +22,10 @@ if not defined ignore_ext (
 )
 if defined out (
     echo Unpacking: "%~nx1" to "%out%"
-    easage unpack --source "%~nx1" --output "%out%"
+    easage unpack --all --source "%~nx1" --output "%out%"
 ) else (
     echo Unpacking: "%~nx1" to "%~n1"
-    easage unpack --source "%~nx1" --output "%~n1"
+    easage unpack --all --source "%~nx1" --output "%~n1"
 )
 shift
 goto NotUnpacked
