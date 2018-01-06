@@ -77,10 +77,10 @@ impl Kind {
     }
 }
 
-type EntryTable = HashMap<String, Entry>;
+type EntryInfoTable = HashMap<String, EntryInfo>;
 
 #[derive(Debug)]
-pub struct Entry {
+pub struct EntryInfo {
     pub offset: u32,
     pub len: u32,
     pub name: String,
@@ -133,7 +133,7 @@ impl Archive {
         values.read_u32::<BigEndian>()
     }
 
-    pub fn read_secret_data(&mut self, table: &EntryTable) -> io::Result<Option<&[u8]>> {
+    pub fn read_secret_data(&mut self, table: &EntryInfoTable) -> io::Result<Option<&[u8]>> {
         let table_size = table.iter().map(|(_k, e)|
             (std::mem::size_of::<u32>() + // offset
              std::mem::size_of::<u32>() + // length
@@ -153,13 +153,13 @@ impl Archive {
     /// Read the metadata table that lists the entries in this archive.
     /// You will need to pass the resulting table to `get_data_from_table`
     /// to retrieve actual entry data.
-    pub fn read_entry_metadata_table(&mut self) -> io::Result<EntryTable> {
+    pub fn read_entry_metadata_table(&mut self) -> io::Result<EntryInfoTable> {
         let len = self.read_len()?;
 
         let mut c = std::io::Cursor::new(&self[..]);
         c.seek(SeekFrom::Start(Self::HEADER_LEN as u64))?;
 
-        let mut table = EntryTable::new();
+        let mut table = EntryInfoTable::new();
 
         for _ in 0..len {
             let offset = c.read_u32::<BigEndian>()?;
@@ -172,13 +172,13 @@ impl Archive {
             };
 
             // TODO: Investigate K=&str so `clone()` can be avoided
-            table.insert(name.clone(), Entry { offset, len, name });
+            table.insert(name.clone(), EntryInfo { offset, len, name });
         }
 
         Ok(table)
     }
 
-    pub fn get_bytes_via_table(&mut self, table: &EntryTable, name: &str) -> Option<&[u8]> {
+    pub fn get_bytes_via_table(&mut self, table: &EntryInfoTable, name: &str) -> Option<&[u8]> {
         match table.get(name) {
             Some(entry) => {
                 let start = entry.offset as usize;
