@@ -8,6 +8,7 @@ Set-Location $STAGE
 $ZIP = "$SRC_DIR\$($ENV:CRATE_NAME)-$($ENV:APPVEYOR_REPO_TAG_NAME)-$($ENV:TARGET).zip"
 
 Copy-Item "$SRC_DIR\target\$($ENV:TARGET)\release\$($ENV:CRATE_NAME).exe" '.\'
+Copy-Item "$SRC_DIR\contrib\$($ENV:CRATE_NAME)-list.cmd" '.\'
 Copy-Item "$SRC_DIR\contrib\$($ENV:CRATE_NAME)-pack.cmd" '.\'
 Copy-Item "$SRC_DIR\contrib\$($ENV:CRATE_NAME)-unpack.cmd" '.\'
 
