@@ -10,7 +10,7 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
         .author("Taryn Hill <taryn@phrohdoh.com>")
         .arg(Arg::with_name(ARG_NAME_SHELL)
                 .required(true)
-                .possible_values(&["bash", "fish", "zsh"])
+                .possible_values(&["bash", "fish", "powershell", "zsh"])
                 .help("The shell to generate the script for"))
 }
 
