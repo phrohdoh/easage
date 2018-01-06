@@ -2,7 +2,7 @@
 authors = ["Taryn Hill <taryn@phrohdoh.com>"]
 license = "MIT"
 name = "easage"
-version = "0.0.1"
+version = "0.0.2"
 include = ["src/**/*.rs", "Cargo.toml"]
 description = "Programmatic manipulation of Electronic Art's BIG format"
 repository = "https://github.com/Phrohdoh/easage"
