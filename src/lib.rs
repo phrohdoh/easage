@@ -13,7 +13,7 @@ extern crate walkdir;
 
 use std::error::Error;
 use std::collections::HashMap;
-use std::io::{self, BufRead, Seek,  SeekFrom};
+use std::io::{BufRead, Seek,  SeekFrom};
 use std::ops::Deref;
 use std::path::Path;
 use std::sync::Arc;
@@ -96,7 +96,7 @@ pub struct Archive {
 impl Archive {
     pub const HEADER_LEN: u32 = 16;
 
-    pub fn from_path<P: AsRef<Path>>(path: P) -> io::Result<Archive> {
+    pub fn from_path<P: AsRef<Path>>(path: P) -> LibResult<Archive> {
         let path = path.as_ref();
         let mmap = Mmap::open_path(path, Protection::Read)?;
         let mmap = Arc::new(mmap);
