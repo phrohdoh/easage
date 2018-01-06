@@ -16,11 +16,8 @@ const ARG_NAME_ORDER: &'static str = "order";
 const ARG_VALUE_ORDER_SMALLEST_TO_LARGEST: &'static str = "smallest-to-largest";
 const ARG_VALUE_ORDER_PATH: &'static str = "path";
 
-const VERSION: &'static str = "0.0.3";
-
 pub fn get_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name(COMMAND_NAME)
-        .version(VERSION)
         .about("Recursively package a directory structure into a BIG archive")
         .author("Taryn Hill <taryn@phrohdoh.com>")
         .arg(Arg::with_name(ARG_NAME_SOURCE)

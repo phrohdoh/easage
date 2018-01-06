@@ -19,8 +19,7 @@ use easage_pack as pack;
 mod easage_completions;
 use easage_completions as completions;
 
-const NAME: &'static str = "easage";
-const VERSION: &'static str = "0.0.3";
+const NAME: &'static str = env!("CARGO_PKG_NAME");
 
 #[derive(Debug, Fail)]
 pub enum CliError {
@@ -56,7 +55,7 @@ pub type CliResult<T> = Result<T, CliError>;
 
 fn build_cli<'a, 'b>() -> App<'a, 'b> {
     App::new(NAME)
-        .version(VERSION)
+        .version(env!("CARGO_PKG_VERSION"))
         .about("Read, create, and unpack from BIG archives")
         .author("Taryn Hill <taryn@phrohdoh.com>")
         .setting(AppSettings::SubcommandRequiredElseHelp)

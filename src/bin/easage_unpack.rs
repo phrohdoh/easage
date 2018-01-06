@@ -12,11 +12,8 @@ const ARG_NAME_OUTPUT: &'static str = "output";
 const ARG_NAME_NAMES: &'static str = "names";
 const ARG_NAME_ALL: &'static str = "all";
 
-const VERSION: &'static str = "0.0.1";
-
 pub fn get_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name(COMMAND_NAME)
-        .version(VERSION)
         .about("Unpack the contents of a BIG archive")
         .author("Taryn Hill <taryn@phrohdoh.com>")
         .arg(Arg::with_name(ARG_NAME_SOURCE)
