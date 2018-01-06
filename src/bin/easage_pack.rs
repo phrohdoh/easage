@@ -28,25 +28,25 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .value_name(ARG_NAME_SOURCE)
                 .takes_value(true)
                 .required(true)
-                .help("Path to the directory to pack into a BIG archive."))
+                .help("path to the directory to pack into a BIG archive"))
         .arg(Arg::with_name(ARG_NAME_OUTPUT)
                 .long(ARG_NAME_OUTPUT)
                 .value_name(ARG_NAME_OUTPUT)
                 .takes_value(true)
                 .required(true)
-                .help("Path to the output BIG archive."))
+                .help("path to the output BIG archive"))
         .arg(Arg::with_name(ARG_NAME_KIND)
                 .long(ARG_NAME_KIND)
                 .value_name(ARG_NAME_KIND)
                 .takes_value(true)
                 .required(true)
-                .validator(validate_kind)
-                .help("BIG archive kind (BIGF or BIG4, case-sensitive)"))
+                .possible_values(&["BIGF", "BIG4"])
+                .help("archive kind (BIGF or BIG4, case-sensitive)"))
         .arg(Arg::with_name(ARG_NAME_STRIP_PREFIX)
                 .long(ARG_NAME_STRIP_PREFIX)
                 .value_name(ARG_NAME_STRIP_PREFIX)
                 .takes_value(true)
-                .help("A path prefix to strip from entry names"))
+                .help("a prefix to strip from entry names"))
         .arg(Arg::with_name(ARG_NAME_ORDER)
                 .long(ARG_NAME_ORDER)
                 .value_name(ARG_NAME_ORDER)
@@ -54,7 +54,7 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .default_value(ARG_VALUE_ORDER_PATH)
                 .validator(validate_order)
                 .possible_values(&[ARG_VALUE_ORDER_SMALLEST_TO_LARGEST, ARG_VALUE_ORDER_PATH])
-                .help("The criteria used to determine entry order in the archive"))
+                .help("criteria used to determine entry order in the archive"))
 }
 
 pub fn run(args: &ArgMatches) -> CliResult<()> {
@@ -118,13 +118,5 @@ fn validate_order(v: String) -> Result<(), String> {
             ARG_NAME_ORDER,
             ARG_VALUE_ORDER_SMALLEST_TO_LARGEST,
             ARG_VALUE_ORDER_PATH))
-    }
-}
-
-fn validate_kind(v: String) -> Result<(), String> {
-    if v != "BIG4" && v != "BIGF" {
-        Err(format!("{} must be one of 'BIGF' or 'BIG4'", ARG_NAME_KIND))
-    } else {
-        Ok(())
     }
 }

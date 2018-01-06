@@ -18,10 +18,10 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .index(1)
                 .takes_value(true)
                 .required(true)
-                .help("Path to the BIG to read."))
+                .help("path to the BIG to read"))
         .arg(Arg::with_name(ARG_NAME_VERBOSE)
                 .long(ARG_NAME_VERBOSE)
-                .help("If supplied output more information (typically only useful for developing easage itself)"))
+                .help("if supplied output more information (typically only useful for developing easage itself)"))
 }
 
 pub fn run(args: &ArgMatches) -> CliResult<()> {

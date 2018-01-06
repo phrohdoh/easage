@@ -11,7 +11,7 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
         .arg(Arg::with_name(ARG_NAME_SHELL)
                 .required(true)
                 .possible_values(&["bash", "fish", "powershell", "zsh"])
-                .help("The shell to generate the script for"))
+                .help("the shell to generate the script for"))
 }
 
 pub fn run(args: &ArgMatches) -> CliResult<()> {
