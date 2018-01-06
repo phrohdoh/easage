@@ -118,22 +118,22 @@ impl Archive {
         Kind::from_bytes(&self[0..4])
     }
 
-    pub fn read_size(&self) -> io::Result<u32> {
+    pub fn read_size(&self) -> LibResult<u32> {
         let mut values = &self[4..8];
-        values.read_u32::<LittleEndian>()
+        Ok(values.read_u32::<LittleEndian>()?)
     }
 
-    pub fn read_len(&self) -> io::Result<u32> {
+    pub fn read_len(&self) -> LibResult<u32> {
         let mut values = &self[8..12];
-        values.read_u32::<BigEndian>()
+        Ok(values.read_u32::<BigEndian>()?)
     }
 
-    pub fn read_data_start(&self) -> io::Result<u32> {
+    pub fn read_data_start(&self) -> LibResult<u32> {
         let mut values = &self[12..16];
-        values.read_u32::<BigEndian>()
+        Ok(values.read_u32::<BigEndian>()?)
     }
 
-    pub fn read_secret_data(&mut self, table: &EntryInfoTable) -> io::Result<Option<&[u8]>> {
+    pub fn read_secret_data(&mut self, table: &EntryInfoTable) -> LibResult<Option<&[u8]>> {
         let table_size = table.iter().map(|(_k, e)|
             (std::mem::size_of::<u32>() + // offset
              std::mem::size_of::<u32>() + // length
@@ -153,7 +153,7 @@ impl Archive {
     /// Read the metadata table that lists the entries in this archive.
     /// You will need to pass the resulting table to `get_data_from_table`
     /// to retrieve actual entry data.
-    pub fn read_entry_metadata_table(&mut self) -> io::Result<EntryInfoTable> {
+    pub fn read_entry_metadata_table(&mut self) -> LibResult<EntryInfoTable> {
         let len = self.read_len()?;
 
         let mut c = std::io::Cursor::new(&self[..]);
