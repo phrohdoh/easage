@@ -16,6 +16,10 @@ use easage_list as list;
 mod easage_pack;
 use easage_pack as pack;
 
+mod easage_completions;
+use easage_completions as completions;
+
+const NAME: &'static str = "easage";
 const VERSION: &'static str = "0.0.3";
 
 #[derive(Debug, Fail)]
@@ -50,18 +54,23 @@ impl From<::std::io::Error> for CliError {
 
 pub type CliResult<T> = Result<T, CliError>;
 
-fn main() {
-    let matches = App::new("easage")
+fn build_cli<'a, 'b>() -> App<'a, 'b> {
+    App::new(NAME)
         .version(VERSION)
         .about("Read, create, and unpack from BIG archives")
         .author("Taryn Hill <taryn@phrohdoh.com>")
         .setting(AppSettings::SubcommandRequiredElseHelp)
+        .subcommand(completions::get_command())
         .subcommand(list::get_command())
         .subcommand(pack::get_command())
         .subcommand(unpack::get_command())
-        .get_matches();
+}
+
+fn main() {
+    let matches = build_cli().get_matches();
 
     let run_result = match matches.subcommand() {
+        (completions::COMMAND_NAME, Some(args)) => completions::run(args),
         (list::COMMAND_NAME, Some(args)) => list::run(args),
         (pack::COMMAND_NAME, Some(args)) => pack::run(args),
         (unpack::COMMAND_NAME, Some(args)) => unpack::run(args),
