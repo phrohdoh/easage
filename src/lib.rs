@@ -77,7 +77,7 @@ impl Kind {
     }
 }
 
-type EntryInfoTable = HashMap<String, EntryInfo>;
+pub type EntryInfoTable = HashMap<String, EntryInfo>;
 
 #[derive(Debug)]
 pub struct EntryInfo {
