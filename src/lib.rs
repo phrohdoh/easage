@@ -1,3 +1,114 @@
+//! `easage` provides programmatic manipulation of BIG archives.
+//!
+//! BIG files are an archive format used in many games published by Electronic Arts.
+//!
+//! The BIG format is conceptually similar to TAR. It has magic, a header, and data.
+//!
+//! Neither compressed nor encrypted BIG formats are supported by easage at this time.
+//!
+//! # Getting started
+//!
+//! Read the below examples then check out the `Archive` struct.
+//!
+//! # Error handling
+//!
+//! Errors are bubbled-up via the [`failure`](https://crates.io/crates/failure) crate into
+//! the all-encompassing `LibError` enum.
+//!
+//! All errors implement the `Display` trait so feel free to print away!
+//!
+//! <small>
+//! Side note: I don't think I am using all the goodies `failure` has to offer.
+//! Please let me know if you see something that can be improved.
+//! </small>
+//!
+//! # Examples
+//!
+//! Read an archive from a file:
+//!
+//! ```rust,no_run
+//! use easage::Archive;
+//!
+//! // This must be a type that implements `AsRef<Path>`.
+//! let path = "path/to/your.big";
+//!
+//! let archive = match Archive::from_path(path) {
+//!     Ok(archive) => archive,
+//!     Err(e) => {
+//!         eprintln!("{}", e);
+//!         return;
+//!     },
+//! };
+//! ```
+//!
+//! Getting data of a file that is inside of an archive:
+//!
+//! ```rust,no_run
+//! use easage::Archive;
+//!
+//! let mut archive = Archive::from_path("path/to/your.big").unwrap();
+//!
+//! // This provides us with a lookup table so we don't
+//! // have to read the header repeatedly.
+//! let table = match archive.read_entry_metadata_table() {
+//!     Ok(table) => table,
+//!     Err(e) => {
+//!         eprintln!("{}", e);
+//!         return;
+//!     },
+//! };
+//!
+//! // NOTE: `table` is an easage::EntryInfoTable which
+//! // you can `.iter()` over to inspect all entries.
+//!
+//! if let Some(data) = archive.get_bytes_via_table(&table, "your/entry/name.txt") {
+//!     // data: &[u8]
+//! }
+//! ```
+//!
+//! Package a directory (recursively) into an archive:
+//!
+//! ```rust,no_run
+//! use std::io::Write;
+//! use easage::Kind;
+//! use easage::packer::{self, Settings, EntryOrderCriteria};
+//!
+//! // This must be a type that implements `AsRef<Path>`.
+//! let directory_to_pack = "path/to/a/directory";
+//!
+//! // Where to write the binary data to.
+//! // This must be a type that implements `Write`.
+//! let mut buf = vec![];
+//!
+//! // This is the 'magic' that identifies this file
+//! // as a BIG archive. Only Big4 and BigF are supported currently.
+//! let kind = Kind::BigF;
+//!
+//! let settings = Settings {
+//!     // Order the archive entries alphanumeric by filepath.
+//!     entry_order_criteria: EntryOrderCriteria::Path,
+//!
+//!     // We do not want to strip any prefix in this example.
+//!     strip_prefix: None,
+//! };
+//!
+//! // Finally we can create our package!
+//! if let Err(e) = packer::pack_directory(directory_to_pack, &mut buf, kind, settings) {
+//!     eprintln!("{}", e);
+//! }
+//!
+//! // At this point you probably want to write `buf` to a file.
+//! use std::fs::OpenOptions;
+//!
+//! let mut file = OpenOptions::new()
+//!     .write(true)
+//!     .create(true)
+//!     .open("my_archive.big")
+//!     .expect("Failed to open file for writing.");
+//!
+//! file.write_all(&buf).expect("Failed to write data to the new file.");
+//! ```
+
 extern crate byteorder;
 use byteorder::{LittleEndian, BigEndian, ReadBytesExt};
 
@@ -77,8 +188,13 @@ impl Kind {
     }
 }
 
+/// A map from entry name to metadata present in the header of an Archive.
 pub type EntryInfoTable = HashMap<String, EntryInfo>;
 
+/// Metadata that describes a single entry
+/// in the owning Archive.
+///
+/// This struct contains none of the actual file data.
 #[derive(Debug)]
 pub struct EntryInfo {
     pub offset: u32,
@@ -86,16 +202,25 @@ pub struct EntryInfo {
     pub name: String,
 }
 
+/// A file container.
+///
+/// Library users start here!
 pub struct Archive {
     data: ArcRef<Mmap, [u8]>,
 }
 
-/// Functions with the `read` prefix actually perform a read from
-/// the memory-mapped archive. Typically you want to call these a single
-/// time and refer to the resulting values in the rest of your code.
+/// Functions with the `read_` prefix actually perform a read from
+/// the memory-mapped archive.
+///
+/// Typically you want to call these a single time and refer to
+/// the resulting values in the rest of your code.
 impl Archive {
+    #[doc(hidden)]
     pub const HEADER_LEN: u32 = 16;
 
+    /// Memory-map the given filepath and initialize an Archive structure.
+    ///
+    /// This does not perform any data reads and as such performs no validation.
     pub fn from_path<P: AsRef<Path>>(path: P) -> LibResult<Archive> {
         let path = path.as_ref();
         let mmap = Mmap::open_path(path, Protection::Read)?;
@@ -106,6 +231,7 @@ impl Archive {
     }
 
     // TODO: Consider returning a Validity enum with Valid, Bogus{Size,Len,Count,Offset}, etc variants
+    #[doc(hidden)]
     pub fn is_valid(&self) -> bool {
         // TODOs:
         // - Check file size (stat) vs `size()`
@@ -114,25 +240,46 @@ impl Archive {
         unimplemented!()
     }
 
+    /// The file signature that indicates whether or not
+    /// this is a BIG archive.
+    ///
+    /// Little-endian ASCII sequence from offset 4 to 8 (high exclusive).
     pub fn read_kind(&self) -> Kind {
         Kind::from_bytes(&self[0..4])
     }
 
+    /// This is the size, in bytes, of the entire archive.
+    ///
+    /// Little-endian u32 from offset 4 to 8 (high exclusive).
     pub fn read_size(&self) -> LibResult<u32> {
         let mut values = &self[4..8];
         Ok(values.read_u32::<LittleEndian>()?)
     }
 
+    /// This is the number of entries stored in the archive.
+    ///
+    /// Big-endian u32 from offset 8 to 12 (high exclusive).
     pub fn read_len(&self) -> LibResult<u32> {
         let mut values = &self[8..12];
         Ok(values.read_u32::<BigEndian>()?)
     }
 
+    /// Offset at which the first entry's data starts.
+    ///
+    /// Big-endian u32 from offset 12 to 16 (high exclusive).
     pub fn read_data_start(&self) -> LibResult<u32> {
         let mut values = &self[12..16];
         Ok(values.read_u32::<BigEndian>()?)
     }
 
+    /// There is potentially a gap between the end of the header
+    /// and the start of the data we care about. I affectionately
+    /// refer to this as "secret data".
+    ///
+    /// You probably don't care about this.
+    ///
+    /// I do not know if this needs to be aligned to a particular
+    /// size for other BIG-manipulating tools to read it.
     pub fn read_secret_data(&mut self, table: &EntryInfoTable) -> LibResult<Option<&[u8]>> {
         let table_size = table.iter().map(|(_k, e)|
             (std::mem::size_of::<u32>() + // offset
@@ -178,6 +325,16 @@ impl Archive {
         Ok(table)
     }
 
+    /// Given a table from this archive's `read_entry_metadata_table` and an
+    /// entry name return the data of the named file if this archive
+    /// contains a file by that name.
+    ///
+    /// # Panics
+    /// If you provide this a table from a different archive that happens to
+    /// share an entry name with an entry in this archive this *may* panic.
+    ///
+    /// A panic will occurr if data start or end for an entry lies outside
+    /// of the archive file's boundaries.
     pub fn get_bytes_via_table(&mut self, table: &EntryInfoTable, name: &str) -> Option<&[u8]> {
         match table.get(name) {
             Some(entry) => {
@@ -190,6 +347,7 @@ impl Archive {
     }
 }
 
+#[doc(hidden)]
 impl Deref for Archive {
     type Target = [u8];
 
