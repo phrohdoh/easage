@@ -138,7 +138,7 @@ pub enum LibError {
         path: String,
     },
 
-    #[fail(display = "The archive kind you gave is invalid in this scenario")]
+    #[fail(display = "The archive kind you gave is invalid in this context")]
     InvalidKind,
 
     #[fail(display = "{}", message)]
