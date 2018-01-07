@@ -6,6 +6,7 @@ version = "0.0.2"
 include = ["src/**/*.rs", "Cargo.toml"]
 description = "Programmatic manipulation of Electronic Art's BIG format"
 repository = "https://github.com/Phrohdoh/easage"
+# documentation = "https://docs.rs/easage/"
 
 [[bin]]
 doc = false
