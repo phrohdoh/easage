@@ -6,4 +6,5 @@ version = "0.0.1"
 [dependencies]
 gdk = "0.7.0"
 gtk = "0.3.0"
+number_prefix = "0.2.7"
 easage = { path = "../../" }

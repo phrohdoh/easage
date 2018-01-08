@@ -9,6 +9,9 @@ use std::io::Write;
 extern crate easage as lib;
 use lib::Archive;
 
+extern crate number_prefix;
+use number_prefix::{binary_prefix, Standalone, Prefixed};
+
 extern crate gdk;
 use gdk::enums::key;
 
@@ -67,7 +70,7 @@ fn main() {
     window.get_preferred_width();
     window.set_default_size(1440, 900);
 
-    let ei_store = ListStore::new(&[Type::String, Type::U32, Type::String]);
+    let ei_store = ListStore::new(&[Type::String, Type::String, Type::String]);
 
     macro_rules! add_column {
         ($tree:ident, $title:expr, $id:expr) => {{
@@ -85,7 +88,7 @@ fn main() {
     entryinfo_tree.set_headers_visible(true);
 
     add_column!(entryinfo_tree, "Name", 0);
-    add_column!(entryinfo_tree, "Length", 1);
+    add_column!(entryinfo_tree, "Size", 1);
     add_column!(entryinfo_tree, "Offset", 2);
 
     fn setup_tree(tree: TreeView, extract_button: Button) {
@@ -150,11 +153,18 @@ fn main() {
                 ei_store.clear();
 
                 for (name_path, info) in table.iter() {
+                    let float_len = info.len as f32;
+
+                    let formatted_size = match binary_prefix(float_len) {
+                        Standalone(bytes) => format!("{} B", bytes),
+                        Prefixed(prefix, n) => format!("{:.2} {}B", n, prefix),
+                    };
+
                     ei_store.insert_with_values(None,
                         &[0, 1, 2],
                         &[
                             &name_path.to_string(),
-                            &info.len,
+                            &formatted_size,
                             &format!("{:#X}", info.offset),
                         ]
                     );
