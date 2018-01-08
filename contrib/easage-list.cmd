@@ -9,20 +9,27 @@ if not exist easage.exe goto FileMissing
 rem Set ignore_ext to some value e.g. '1'
 rem to disable .big extension checking
 set ignore_ext=
+
 rem Set verbose to some value e.g. '1'
 rem to be more verbose when listing
 rem i.e list more information about the BIG file
 set verbose=
+
+rem Uncomment out (remove ::) to redirect listing to a file
+::set out=easage-list.log
 
 if not defined ignore_ext (
     if "%~nx1" NEQ "%~n1.big" goto NotBIG
 )
 
 echo Listing: "%~nx1"
-echo Press space to scroll a page.
-echo.
 
-if defined verbose (easage list --verbose "%~nx1" | more) else (easage list "%~nx1" | more)
+if not defined out (
+    echo Press space to scroll a page. & echo.
+    if defined verbose (easage list --verbose "%~nx1" | more) else (easage list "%~nx1" | more)
+) else (
+    if defined verbose (easage list --verbose "%~nx1" >%out% && exit 1) else (easage list "%~nx1" >%out% && exit 1)
+)
 
 echo.
 echo Press any key to exit...
