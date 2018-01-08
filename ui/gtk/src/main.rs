@@ -144,6 +144,7 @@ fn main() {
                 },
             }
         } else {
+            dialog.destroy();
             return;
         }
 
