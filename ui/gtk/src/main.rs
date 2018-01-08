@@ -121,7 +121,7 @@ fn main() {
 
     let archive_entrybox_clone = archive_entrybox.clone();
     let archive1 = archive.clone();
-    archive_button.connect_clicked(move |_| {
+    archive_button.connect_clicked(move |_this| {
         let dialog = FileChooserDialog::new(
             Some("Select a BIG archive"),
             Some(&Window::new(WindowType::Popup)),
@@ -163,7 +163,7 @@ fn main() {
     });
 
     let archive2 = archive.clone();
-    extract_button.connect_clicked(move |_| {
+    extract_button.connect_clicked(move |_this| {
         let sel = entryinfo_tree.get_selection();
         let (mut sel_paths, model) = sel.get_selected_rows();
 
@@ -187,7 +187,7 @@ fn main() {
             _ => return,
         };
 
-        let mut a = archive2.borrow_mut();    
+        let mut a = archive2.borrow_mut();
         let a = a.as_mut().unwrap();
         let table = a.read_entry_metadata_table().unwrap();
 
