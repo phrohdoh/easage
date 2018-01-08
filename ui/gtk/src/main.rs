@@ -96,6 +96,7 @@ fn main() {
         };
 
         sel.connect_changed(move |this| {
+            // TODO: Do all of this when an archive is opened, too.
             let selected_count = this.count_selected_rows();
             let store_len = model.iter_n_children(None);
 
@@ -181,6 +182,11 @@ fn main() {
         let dialog_res = dialog.run();
         let filename = dialog.get_filename();
         dialog.destroy();
+
+        /* KNOWN BUG:
+         * Hitting esc *or* clicking the cancel button
+         * will still extract files.
+         */
 
         match (dialog_res, filename) {
             (_resp_ok, Some(path)) => dest_dir_path = path,
