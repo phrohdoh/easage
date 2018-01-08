@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::fs::{self, OpenOptions};
@@ -171,7 +173,7 @@ fn main() {
                         .write(true)
                         .truncate(true)
                         .open(&output_filepath)
-                        .expect("Failed to open file for writing");
+                        .expect(&format!("Failed to open file {:?} for writing", output_filepath));
 
                     f.write(data).expect("Failed to write data");
                 }
