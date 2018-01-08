@@ -1,0 +1,9 @@
+[package]
+authors = ["Taryn Hill <taryn@phrohdoh.com>"]
+name = "easage_gtk"
+version = "0.0.1"
+
+[dependencies]
+gdk = "0.7.0"
+gtk = "0.3.0"
+easage = { path = "../../" }
