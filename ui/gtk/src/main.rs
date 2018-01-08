@@ -162,11 +162,14 @@ fn main() {
                     .expect(&format!("Unable to convert gtk::Type::String {:?} to a Rust String", val));
 
                 if let Some(data) = a.get_bytes_via_table(&table, &name) {
-                    fs::create_dir_all(&dest_dir_path)
-                        .expect("Failed to create necessary parent directories");
-
                     let mut output_filepath = dest_dir_path.clone();
-                    output_filepath.push(&name);
+                    output_filepath.push(name.replace("\\", "/"));
+
+                    let parent = output_filepath.parent()
+                        .expect(&format!("Unable to determine parent path of {:?}", &output_filepath));
+
+                    fs::create_dir_all(&parent)
+                        .expect("Failed to create necessary parent directories");
                     let mut f = OpenOptions::new()
                         .create(true)
                         .read(true)
