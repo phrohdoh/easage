@@ -125,7 +125,7 @@ fn main() {
     extract_button.connect_clicked(move |_| {
         let sel = entryinfo_tree.get_selection();
         sel.set_mode(gtk::SelectionMode::Multiple);
-        let (sel_paths, model) = sel.get_selected_rows();
+        let (mut sel_paths, model) = sel.get_selected_rows();
 
         let dialog = FileChooserDialog::new(
             Some("Select a directory to extract to"),
@@ -134,28 +134,29 @@ fn main() {
         );
 
         dialog.add_button("_Cancel", gtk::ResponseType::Cancel.into());
-        dialog.add_button("_Select", gtk::ResponseType::Ok.into());
+        let resp_ok = gtk::ResponseType::Ok.into();
+        dialog.add_button("_Select", resp_ok);
 
         let dest_dir_path: PathBuf;
-        if dialog.run() == gtk::ResponseType::Ok.into() {
-            match dialog.get_filename() {
-                Some(path) => dest_dir_path = path,
-                None => {
-                    dialog.destroy();
-                    return; // NOTE: Is this even possible?
-                },
-            }
-        } else {
-            dialog.destroy();
-            return;
-        }
+        let dialog_res = dialog.run();
+        let filename = dialog.get_filename();
+        dialog.destroy();
+
+        match (dialog_res, filename) {
+            (_resp_ok, Some(path)) => dest_dir_path = path,
+            _ => return,
+        };
 
         let mut a = archive2.borrow_mut();    
         let a = a.as_mut().unwrap();
         let table = a.read_entry_metadata_table().unwrap();
 
-        // TODO: To extract all when nothing is selected
-        // do the below for *every* entry.
+        if sel_paths.len() == 0 {
+            sel.select_all();
+            let (s, _) = sel.get_selected_rows();
+            sel_paths = s;
+            sel.unselect_all();
+        }
 
         for sel_path in sel_paths {
             if let Some(iter) = model.get_iter(&sel_path) {
