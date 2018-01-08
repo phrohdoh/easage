@@ -14,7 +14,21 @@ use gdk::enums::key;
 
 extern crate gtk;
 use gtk::prelude::Inhibit;
-use gtk::{Builder, Window, WindowType, Button, Entry as EntryBox, FileChooserDialog, ListStore, Type, TreeView, TreeViewColumn};
+
+use gtk::{
+    Builder,
+    Window,
+    WindowType,
+    Button,
+    Entry as EntryBox,
+    FileChooserDialog,
+    ListStore,
+    Type,
+    TreeSelection,
+    TreeView,
+    TreeViewColumn
+};
+
 use gtk::{
     BuilderExt,
     ButtonExt,
@@ -74,6 +88,33 @@ fn main() {
     add_column!(entryinfo_tree, "Length", 1);
     add_column!(entryinfo_tree, "Offset", 2);
 
+    fn setup_tree(tree: TreeView, extract_button: Button) {
+        let sel = tree.get_selection();
+        let model = match tree.get_model() {
+            Some(m) => m,
+            _ => return,
+        };
+
+        sel.connect_changed(move |this| {
+            let selected_count = this.count_selected_rows();
+            let store_len = model.iter_n_children(None);
+
+            let count_str = if selected_count == 0 || selected_count == store_len {
+                "all".into()
+            } else {
+                format!("({})", selected_count)
+            };
+
+            extract_button.set_label(&format!("Extract {}", count_str))
+        });
+    }
+
+    setup_tree(entryinfo_tree.clone(), extract_button.clone());
+
+    entryinfo_tree.connect_row_activated(move |this, path, column| {
+        println!("connect_row_activated(_, {}, {:?})", path, column);
+    });
+
     let archive: Rc<RefCell<Option<Archive>>> = Rc::new(RefCell::new(None));
     // TODO
     // let archive_table: Rc<RefCell<Option<HashMap<String, EntryInfo>>>> = Rc::new(RefCell::new(None));
@@ -124,7 +165,6 @@ fn main() {
     let archive2 = archive.clone();
     extract_button.connect_clicked(move |_| {
         let sel = entryinfo_tree.get_selection();
-        sel.set_mode(gtk::SelectionMode::Multiple);
         let (mut sel_paths, model) = sel.get_selected_rows();
 
         let dialog = FileChooserDialog::new(
