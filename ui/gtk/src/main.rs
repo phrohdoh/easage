@@ -154,6 +154,9 @@ fn main() {
         let a = a.as_mut().unwrap();
         let table = a.read_entry_metadata_table().unwrap();
 
+        // TODO: To extract all when nothing is selected
+        // do the below for *every* entry.
+
         for sel_path in sel_paths {
             if let Some(iter) = model.get_iter(&sel_path) {
                 let val = model.get_value(&iter, 0);
