@@ -3,7 +3,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::fs::{self, OpenOptions};
-use std::path::PathBuf;
 use std::io::Write;
 
 extern crate easage as lib;
@@ -27,7 +26,6 @@ use gtk::{
     FileChooserDialog,
     ListStore,
     Type,
-    TreeSelection,
     TreeView,
     TreeViewColumn
 };
@@ -115,10 +113,6 @@ fn main() {
 
     setup_tree(entryinfo_tree.clone(), extract_button.clone());
 
-    entryinfo_tree.connect_row_activated(move |this, path, column| {
-        println!("connect_row_activated(_, {}, {:?})", path, column);
-    });
-
     let archive: Rc<RefCell<Option<Archive>>> = Rc::new(RefCell::new(None));
     // TODO
     // let archive_table: Rc<RefCell<Option<HashMap<String, EntryInfo>>>> = Rc::new(RefCell::new(None));
@@ -185,23 +179,22 @@ fn main() {
         );
 
         dialog.add_button("_Cancel", gtk::ResponseType::Cancel.into());
-        let resp_ok = gtk::ResponseType::Ok.into();
-        dialog.add_button("_Select", resp_ok);
+        dialog.add_button("_Select", gtk::ResponseType::Ok.into());
 
-        let dest_dir_path: PathBuf;
-        let dialog_res = dialog.run();
-        let filename = dialog.get_filename();
-        dialog.destroy();
-
-        /* KNOWN BUG:
-         * Hitting esc *or* clicking the cancel button
-         * will still extract files.
-         */
-
-        match (dialog_res, filename) {
-            (_resp_ok, Some(path)) => dest_dir_path = path,
-            _ => return,
+        let dest_dir_path = if dialog.run() == gtk::ResponseType::Ok.into() {
+            match dialog.get_filename() {
+                Some(filename) => filename,
+                None => {
+                    dialog.destroy();
+                    return;
+                }
+            }
+        } else {
+            dialog.destroy();
+            return;
         };
+
+        dialog.destroy();
 
         let mut a = archive2.borrow_mut();
         let a = a.as_mut().unwrap();
