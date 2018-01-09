@@ -46,6 +46,33 @@ use gtk::{
     WidgetExt,
 };
 
+#[derive(Debug, PartialEq, Eq)]
+enum Column {
+    Name,
+    Size,
+    Offset,
+}
+
+impl Into<u32> for Column {
+    fn into(self) -> u32 {
+        match self {
+            Column::Name => 0,
+            Column::Size => 1,
+            Column::Offset => 2,
+        }
+    }
+}
+
+impl Into<i32> for Column {
+    fn into(self) -> i32 {
+        match self {
+            Column::Name => 0,
+            Column::Size => 1,
+            Column::Offset => 2,
+        }
+    }
+}
+
 fn main() {
     gtk::init().unwrap();
 
@@ -87,9 +114,9 @@ fn main() {
     entryinfo_tree.set_model(Some(&ei_store));
     entryinfo_tree.set_headers_visible(true);
 
-    add_column!(entryinfo_tree, "Name", 0);
-    add_column!(entryinfo_tree, "Size", 1);
-    add_column!(entryinfo_tree, "Offset", 2);
+    add_column!(entryinfo_tree, "Name", Column::Name.into());
+    add_column!(entryinfo_tree, "Size", Column::Size.into());
+    add_column!(entryinfo_tree, "Offset", Column::Offset.into());
 
     fn setup_tree(tree: TreeView, extract_button: Button) {
         let sel = tree.get_selection();
@@ -167,7 +194,11 @@ fn main() {
                     };
 
                     ei_store.insert_with_values(None,
-                        &[0, 1, 2],
+                        &[
+                            Column::Name.into(),
+                            Column::Size.into(),
+                            Column::Offset.into(),
+                        ],
                         &[
                             &name_path.to_string(),
                             &formatted_size,
