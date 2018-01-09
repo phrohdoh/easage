@@ -12,7 +12,6 @@ extern crate number_prefix;
 use number_prefix::{binary_prefix, Standalone, Prefixed};
 
 extern crate gdk;
-use gdk::enums::key;
 
 extern crate gtk;
 use gtk::prelude::Inhibit;
@@ -55,7 +54,10 @@ fn main() {
     let window: Window = builder.get_object("main_window").unwrap();
     let archive_entrybox: EntryBox = builder.get_object("archive_file_entry").unwrap();
     let archive_button: Button = builder.get_object("archive_file_button").unwrap();
+
     let extract_button: Button = builder.get_object("extract_button").unwrap();
+    extract_button.set_sensitive(false);
+
     let entryinfo_tree = {
         let t: TreeView = builder.get_object("entryinfo_tree").unwrap();
         let sel = t.get_selection();
@@ -119,6 +121,8 @@ fn main() {
 
     let archive_entrybox_clone = archive_entrybox.clone();
     let archive1 = archive.clone();
+    let extract_button1 = extract_button.clone();
+
     archive_button.connect_clicked(move |_this| {
         let dialog = FileChooserDialog::new(
             Some("Select a BIG archive"),
@@ -139,8 +143,16 @@ fn main() {
 
         if let Some(archive_path) = archive_entrybox_clone.get_text() {
             if !archive_path.is_empty() {
+                extract_button1.set_sensitive(false);
+
                 let mut a = Archive::from_path(archive_path).unwrap();
                 let table = a.read_entry_metadata_table().unwrap();
+
+                if table.iter().any(|_| true) {
+                    extract_button1.set_sensitive(true);
+                } else {
+                    println!("TODO: Display fact that archive is empty.");
+                }
 
                 *archive1.borrow_mut() = Some(a);
 
