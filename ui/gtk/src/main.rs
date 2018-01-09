@@ -242,14 +242,6 @@ fn main() {
         Inhibit(false)
     });
 
-    window.connect_key_press_event(move |_, key| {
-        if let key::Escape = key.get_keyval() {
-            gtk::main_quit();
-        }
-
-        Inhibit(false)
-    });
-
     window.show_all();
     gtk::main();
 }
