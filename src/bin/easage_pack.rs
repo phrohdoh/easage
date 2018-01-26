@@ -13,6 +13,8 @@ const ARG_NAME_KIND: &'static str = "kind";
 const ARG_NAME_STRIP_PREFIX: &'static str = "strip-prefix";
 const ARG_NAME_ORDER: &'static str = "order";
 
+const ARG_VALUE_KIND_BIGF: &'static str = "BIGF";
+const ARG_VALUE_KIND_BIG4: &'static str = "BIG4";
 const ARG_VALUE_ORDER_SMALLEST_TO_LARGEST: &'static str = "smallest-to-largest";
 const ARG_VALUE_ORDER_PATH: &'static str = "path";
 
@@ -36,9 +38,9 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .long(ARG_NAME_KIND)
                 .value_name(ARG_NAME_KIND)
                 .takes_value(true)
-                .required(true)
-                .possible_values(&["BIGF", "BIG4"])
-                .help("archive kind (BIGF or BIG4, case-sensitive)"))
+                .default_value(ARG_VALUE_KIND_BIGF)
+                .possible_values(&[ARG_VALUE_KIND_BIGF, ARG_VALUE_KIND_BIG4])
+                .help("use BIG4 for the Battle for Middle-Earth series or BIGF for Generals / Zero-Hour"))
         .arg(Arg::with_name(ARG_NAME_STRIP_PREFIX)
                 .long(ARG_NAME_STRIP_PREFIX)
                 .value_name(ARG_NAME_STRIP_PREFIX)
