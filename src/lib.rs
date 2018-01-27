@@ -41,6 +41,25 @@
 //! };
 //! ```
 //!
+//! Read an archive from bytes in-memory:
+//!
+//! ```rust
+//! use easage::{Archive, Kind};
+//!
+//! // This is just an example and these 4 bytes alone do not constitute a valid BIG archive.
+//! let bytes = b"BIGF".to_vec();
+//!
+//! let archive = match Archive::from_bytes(bytes) {
+//!     Ok(archive) => archive,
+//!     Err(e) => {
+//!         eprintln!("{}", e);
+//!         return;
+//!     },
+//! };
+//!
+//! assert_eq!(archive.read_kind(), Kind::BigF);
+//! ```
+//!
 //! Getting data of a file that is inside of an archive:
 //!
 //! ```rust,no_run
@@ -113,7 +132,7 @@ extern crate byteorder;
 use byteorder::{LittleEndian, BigEndian, ReadBytesExt};
 
 extern crate memmap;
-use memmap::{Mmap, Protection};
+use memmap::{Mmap, MmapOptions};
 
 extern crate owning_ref;
 use owning_ref::ArcRef;
@@ -127,6 +146,7 @@ use std::collections::HashMap;
 use std::io::{BufRead, Seek,  SeekFrom};
 use std::ops::Deref;
 use std::path::Path;
+use std::fs::File;
 use std::sync::Arc;
 
 pub mod packer;
@@ -171,7 +191,7 @@ impl From<walkdir::Error> for LibError {
 
 pub type LibResult<T> = Result<T, LibError>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Kind {
     Unknown(Vec<u8>),
     Big4,
@@ -220,13 +240,32 @@ impl Archive {
 
     /// Memory-map the given filepath and initialize an Archive structure.
     ///
-    /// This does not perform any data reads and as such performs no validation.
+    /// This does not perform any data reads and as such performs no archive validation.
     pub fn from_path<P: AsRef<Path>>(path: P) -> LibResult<Archive> {
         let path = path.as_ref();
-        let mmap = Mmap::open_path(path, Protection::Read)?;
+        let file = File::open(path)?;
+        let mmap = unsafe { MmapOptions::new().map(&file)? };
+        let mmap = Arc::new(mmap);
+        let data = ArcRef::new(mmap).map(|mm| mm.as_ref());
+
+        Ok(Archive { data })
+    }
+
+    /// Create an anonymous memory-map and initialize an Archive structure.
+    ///
+    /// This does not perform any data reads and as such performs no archive validation.
+    ///
+    /// # Errors
+    ///
+    /// * If `bytes.len() == 0` this will return `Err(LibError::Custom { message: "memory map must have a non-zero length" })`
+    pub fn from_bytes(bytes: Vec<u8>) -> LibResult<Archive> {
+        let mut mmap_opts = MmapOptions::new();
+        let mut mmap = mmap_opts.len(bytes.len()).map_anon()?;
+        mmap.copy_from_slice(&bytes);
+        let mmap = mmap.make_read_only()?;
         let mmap = Arc::new(mmap);
 
-        let data = ArcRef::new(mmap).map(|mm| unsafe { mm.as_slice() });
+        let data = ArcRef::new(mmap).map(|mm| mm.as_ref());
         Ok(Archive { data })
     }
 
@@ -353,5 +392,25 @@ impl Deref for Archive {
 
     fn deref(&self) -> &Self::Target {
         &self.data
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn archive_from_bytes() {
+        let bytes = b"BIGF".to_vec();
+        let archive = match Archive::from_bytes(bytes) {
+            Ok(a) => a,
+            Err(e) => {
+                eprintln!("{:?}", e);
+                return;
+            },
+        };
+
+        assert_eq!(archive.read_kind(), Kind::BigF);
     }
 }
