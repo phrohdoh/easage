@@ -281,11 +281,6 @@ impl Archive {
     /// I do not know if this needs to be aligned to a particular
     /// size for other BIG-manipulating tools to read it.
     pub fn read_secret_data(&mut self, table: &EntryInfoTable) -> LibResult<Option<&[u8]>> {
-        let table_size = table.iter().map(|(_k, e)|
-            (std::mem::size_of::<u32>() + // offset
-             std::mem::size_of::<u32>() + // length
-             e.name.len() + 1) as u32 // name + null
-        ).sum::<u32>();
 
         let data_start = self.read_data_start()? as usize;
 
@@ -354,4 +349,13 @@ impl Deref for Archive {
     fn deref(&self) -> &Self::Target {
         &self.data
     }
+}
+
+#[doc(hidden)]
+pub fn calculate_table_size(table: &EntryInfoTable) -> u32 {
+    table.iter().map(|(_k, e)|
+        (std::mem::size_of::<u32>() + // offset
+         std::mem::size_of::<u32>() + // length
+         e.name.len() + 1) as u32     // name + null
+    ).sum::<u32>()
 }
