@@ -402,15 +402,37 @@ mod tests {
 
     #[test]
     fn archive_from_bytes() {
-        let bytes = b"BIGF".to_vec();
-        let archive = match Archive::from_bytes(bytes) {
-            Ok(a) => a,
-            Err(e) => {
-                eprintln!("{:?}", e);
-                return;
-            },
-        };
+        let result = Archive::from_bytes(vec![0]);
+        assert!(result.is_ok())
+    }
 
-        assert_eq!(archive.read_kind(), Kind::BigF);
+    #[test]
+    fn kind_from_bytes_bigf() {
+        let bytes = b"BIGF".to_vec();
+        assert_eq!(Kind::from_bytes(&bytes), Kind::BigF);
+    }
+
+    #[test]
+    fn kind_from_bytes_big4() {
+        let bytes = b"BIG4".to_vec();
+        assert_eq!(Kind::from_bytes(&bytes), Kind::Big4);
+    }
+
+    #[test]
+    fn kind_from_bytes_unknown() {
+        let bytes = b"".to_vec();
+        assert_eq!(Kind::from_bytes(&bytes), Kind::Unknown(bytes));
+
+        let bytes = b"BI".to_vec();
+        assert_eq!(Kind::from_bytes(&bytes), Kind::Unknown(bytes));
+
+        let bytes = b"BIG".to_vec();
+        assert_eq!(Kind::from_bytes(&bytes), Kind::Unknown(bytes));
+
+        let bytes = b"IBG".to_vec();
+        assert_eq!(Kind::from_bytes(&bytes), Kind::Unknown(bytes));
+
+        let bytes = b"BGI".to_vec();
+        assert_eq!(Kind::from_bytes(&bytes), Kind::Unknown(bytes));
     }
 }
