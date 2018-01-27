@@ -283,7 +283,7 @@ impl Archive {
     /// The file signature that indicates whether or not
     /// this is a BIG archive.
     ///
-    /// Little-endian ASCII sequence from offset 4 to 8 (high exclusive).
+    /// Little-endian ASCII sequence from offset 0 to 4 (high exclusive).
     pub fn read_kind(&self) -> Kind {
         Kind::from_bytes(&self[0..4])
     }
