@@ -23,10 +23,10 @@ Run the `cargo build` command above then invoke the binary created directly (or 
 Run via `cargo run` like so:
 
 ```sh
-cargo run -- <subcommand> [flags] [options]
+cargo run --features clap -- <subcommand> [flags] [options]
 ```
 
-If you want to run via `cargo` replace `easage` in the following commands with `cargo run --`.
+If you want to run via `cargo` replace `easage` in the following commands with `cargo run --features clap --`.
 
 ### Examples:
 
