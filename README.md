@@ -32,29 +32,9 @@ cargo build --release
 
 Included in this source tree is a command-line application named `easage` that uses the `easage` library.
 
-You can build this application like so:
+See the [src/bin/](./src/bin/) directory for more details.
 
-```sh
-cargo build --bin easage --features="clap" --release
-```
-
-The output binary will be written to `target/release/easage`.
-
-You can invoke this directly or put it somewhere on your shell's `$PATH`.
-
-### Examples:
-
-```sh
-easage list path/to/a/file.big
-```
-
-```sh
-easage pack --source test_data --output output/path.big --kind BIG4
-```
-
-```sh
-easage unpack --source path/to/a.big --output the/directory/to/unpack/into/
-```
+---
 
 See [contrib](https://github.com/Phrohdoh/easage/tree/master/contrib) for more usage suggestions.
 
