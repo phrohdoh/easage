@@ -423,23 +423,23 @@ mod tests {
         let result = Archive::from_bytes(bytes);
         let err = result.err().unwrap();
 
-        use std::error::Error;
-        use std::io::ErrorKind;
-
         match err {
-           ::Error::IO { inner } => {
-               #[cfg(target_os = "windows")] {
-                   assert_eq!(Some(87), inner.raw_os_error());
-                   assert_eq!(ErrorKind::Other, inner.kind());
-                   assert_eq!("other os error", inner.description());
-               }
+            Error::IO { inner } => {
+                use std::error::Error;
+                use std::io::ErrorKind;
 
-               #[cfg(not(target_os = "windows"))] {
-                   assert_eq!(None, inner.raw_os_error());
-                   assert_eq!(ErrorKind::InvalidInput, inner.kind());
-                   assert_eq!("memory map must have a non-zero length", inner.description());
-               }
-            },
+                #[cfg(target_os = "windows")] {
+                    assert_eq!(Some(87), inner.raw_os_error());
+                    assert_eq!(ErrorKind::Other, inner.kind());
+                    assert_eq!("other os error", inner.description());
+                }
+
+                #[cfg(not(target_os = "windows"))] {
+                    assert_eq!(None, inner.raw_os_error());
+                    assert_eq!(ErrorKind::InvalidInput, inner.kind());
+                    assert_eq!("memory map must have a non-zero length", inner.description());
+                }
+             },
             _ => assert!(false),
         };
     }
