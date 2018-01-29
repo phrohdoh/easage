@@ -1,6 +1,6 @@
 # `easage`
 
-[![Build Status](https://travis-ci.org/Phrohdoh/easage.svg?branch=master)](https://travis-ci.org/Phrohdoh/easage) [![Build Status](https://ci.appveyor.com/api/projects/status/github/Phrohdoh/easage?branch=master&svg=true)](https://ci.appveyor.com/project/Phrohdoh/easage) [![GitHub (pre-)release](https://img.shields.io/github/release/Phrohdoh/easage/all.svg)](https://github.com/Phrohdoh/easage/releases)
+[![Build Status](https://travis-ci.org/Phrohdoh/easage.svg?branch=master)](https://travis-ci.org/Phrohdoh/easage) [![Build Status](https://ci.appveyor.com/api/projects/status/github/Phrohdoh/easage?branch=master&svg=true)](https://ci.appveyor.com/project/Phrohdoh/easage) [![GitHub (pre-)release](https://img.shields.io/github/release/Phrohdoh/easage/all.svg)](https://github.com/Phrohdoh/easage/releases) [![Chat on IRC](https://img.shields.io/badge/irc-%23orcaware%20on%20freenode-brightgreen.svg)](https://kiwiirc.com/client/irc.freenode.net/#orcaware)
 
 A library that provides programmatic manipulation of BIG archives.
 
