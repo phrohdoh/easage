@@ -478,4 +478,59 @@ mod tests {
         let archive = Archive::from_bytes(bytes.clone()).unwrap();
         assert_eq!(archive.read_kind(), Kind::Unknown(bytes));
     }
+
+    #[test]
+    fn archive_read_size_0() {
+        use byteorder::WriteBytesExt;
+
+        let expected = 0;
+
+        let mut bytes = b"BIGF".to_vec();
+        bytes.write_u32::<LittleEndian>(expected).unwrap();
+
+        let archive = Archive::from_bytes(bytes).unwrap();
+        let got = archive.read_size().unwrap();
+
+        assert_eq!(expected, got);
+    }
+
+    #[test]
+    fn archive_read_size_1() {
+        use byteorder::WriteBytesExt;
+
+        let expected = 1;
+
+        let mut bytes = b"BIGF".to_vec();
+        bytes.write_u32::<LittleEndian>(expected).unwrap();
+
+        let archive = Archive::from_bytes(bytes).unwrap();
+        let got = archive.read_size().unwrap();
+
+        assert_eq!(expected, got);
+    }
+
+    #[test]
+    fn archive_read_size_u32_max() {
+        use byteorder::WriteBytesExt;
+
+        let expected = ::std::u32::MAX;
+
+        let mut bytes = b"BIGF".to_vec();
+        bytes.write_u32::<LittleEndian>(expected).unwrap();
+
+        let archive = Archive::from_bytes(bytes).unwrap();
+        let got = archive.read_size().unwrap();
+
+        assert_eq!(expected, got);
+    }
+
+    #[test]
+    #[should_panic]
+    // NOTE: `read_size` panics if `bytes.len() < 8`
+    // TODO: Return an error instead of panicing.
+    fn archive_read_size_panic() {
+        let bytes = b"BIGF".to_vec();
+        let archive = Archive::from_bytes(bytes).unwrap();
+        archive.read_size().unwrap();
+    }
 }
