@@ -141,7 +141,6 @@ extern crate walkdir;
 
 #[macro_use(Fail)] extern crate failure;
 
-use std::error::Error;
 use std::collections::HashMap;
 use std::io::{BufRead, Seek,  SeekFrom};
 use std::ops::Deref;
@@ -151,11 +150,17 @@ use std::sync::Arc;
 
 pub mod packer;
 
-#[derive(Debug, Fail, PartialEq)]
+#[derive(Debug, Fail)]
 pub enum LibError {
     #[fail(display = "Unable to find the path '{}'. Perhaps it does not exist or you do not have the required permissions.", path)]
     PathNotFound {
         path: String,
+    },
+
+    #[fail(display = "I/O error: {:?}", inner)]
+    IO {
+        #[cause]
+        inner: std::io::Error
     },
 
     #[fail(display = "The archive kind you gave is invalid in this context")]
@@ -169,12 +174,8 @@ pub enum LibError {
 
 impl From<std::io::Error> for LibError {
     fn from(e: std::io::Error) -> Self {
-        match e.kind() {
-            std::io::ErrorKind::NotFound => LibError::Custom {
-                message: e.cause().map(|err| err.description().to_string())
-                    .unwrap_or(String::from("A path was not found (exactly which path is currently unknown)"))
-            },
-            _ => LibError::Custom { message: e.description().to_string() },
+        LibError::IO {
+            inner: e,
         }
     }
 }
@@ -399,6 +400,7 @@ impl Deref for Archive {
 
 #[cfg(test)]
 mod tests {
+    use ::std::error::Error;
     use super::*;
 
     #[test]
@@ -441,7 +443,26 @@ mod tests {
     fn archive_from_bytes_zero_length_memmap() {
         let bytes = vec![];
         let result = Archive::from_bytes(bytes);
-        assert_eq!(result, Err(LibError::Custom { message: "memory map must have a non-zero length".into() }));
+        let err = result.err().unwrap();
+
+        use std::io::ErrorKind;
+
+        match err {
+           LibError::IO { inner } => {
+               #[cfg(target_os = "windows")] {
+                   assert_eq!(Some(87), inner.raw_os_error());
+                   assert_eq!(ErrorKind::Other, inner.kind());
+                   assert_eq!("other os error", inner.description());
+               }
+
+               #[cfg(not(target_os = "windows"))] {
+                   assert_eq!(None, inner.raw_os_error());
+                   assert_eq!(ErrorKind::InvalidInput, inner.kind());
+                   assert_eq!("memory map must have a non-zero length", inner.description());
+               }
+            },
+            _ => assert!(false),
+        };
     }
 
     #[test]
