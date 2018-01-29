@@ -13,7 +13,7 @@
 //! # Error handling
 //!
 //! Errors are bubbled-up via the [`failure`](https://crates.io/crates/failure) crate into
-//! the all-encompassing `LibError` enum.
+//! the all-encompassing `Error` enum.
 //!
 //! All errors implement the `Display` trait so feel free to print away!
 //!
@@ -142,7 +142,7 @@ extern crate walkdir;
 #[macro_use(Fail)] extern crate failure;
 
 use std::collections::HashMap;
-use std::io::{BufRead, Seek,  SeekFrom};
+use std::io::{self, BufRead, Seek,  SeekFrom};
 use std::ops::Deref;
 use std::path::Path;
 use std::fs::File;
@@ -150,47 +150,26 @@ use std::sync::Arc;
 
 pub mod packer;
 
-#[derive(Debug, Fail)]
-pub enum LibError {
-    #[fail(display = "Unable to find the path '{}'. Perhaps it does not exist or you do not have the required permissions.", path)]
-    PathNotFound {
-        path: String,
-    },
+mod error;
+pub use error::{Result, Error};
 
-    #[fail(display = "I/O error: {:?}", inner)]
-    IO {
-        #[cause]
-        inner: std::io::Error
-    },
-
-    #[fail(display = "The archive kind you gave is invalid in this context")]
-    InvalidKind,
-
-    #[fail(display = "{}", message)]
-    Custom {
-        message: String,
-    },
-}
-
-impl From<std::io::Error> for LibError {
-    fn from(e: std::io::Error) -> Self {
-        LibError::IO {
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self {
+        Error::IO {
             inner: e,
         }
     }
 }
 
-impl From<walkdir::Error> for LibError {
+impl From<walkdir::Error> for Error {
     fn from(e: walkdir::Error) -> Self {
-        let path =  e.path()
+        let path = e.path()
             .map(|ref_path| ref_path.to_string_lossy().to_string())
             .unwrap_or(String::from("<unknown path>"));
 
-        LibError::PathNotFound { path }
+        Error::PathNotFound { path }
     }
 }
-
-pub type LibResult<T> = Result<T, LibError>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Kind {
@@ -243,7 +222,7 @@ impl Archive {
     /// Memory-map the given filepath and initialize an Archive structure.
     ///
     /// This does not perform any data reads and as such performs no archive validation.
-    pub fn from_path<P: AsRef<Path>>(path: P) -> LibResult<Archive> {
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Archive> {
         let path = path.as_ref();
         let file = File::open(path)?;
         let mmap = unsafe { MmapOptions::new().map(&file)? };
@@ -259,8 +238,8 @@ impl Archive {
     ///
     /// # Errors
     ///
-    /// * If `bytes.len() == 0` this will return `Err(LibError::IO)`
-    pub fn from_bytes(bytes: Vec<u8>) -> LibResult<Archive> {
+    /// * If `bytes.len() == 0` this will return `Err(Error::IO)`
+    pub fn from_bytes(bytes: Vec<u8>) -> Result<Archive> {
         let mut mmap_opts = MmapOptions::new();
         let mut mmap = mmap_opts.len(bytes.len()).map_anon()?;
         mmap.copy_from_slice(&bytes);
@@ -292,7 +271,7 @@ impl Archive {
     /// This is the size, in bytes, of the entire archive.
     ///
     /// Little-endian u32 from offset 4 to 8 (high exclusive).
-    pub fn read_size(&self) -> LibResult<u32> {
+    pub fn read_size(&self) -> Result<u32> {
         let mut values = &self[4..8];
         Ok(values.read_u32::<LittleEndian>()?)
     }
@@ -300,7 +279,7 @@ impl Archive {
     /// This is the number of entries stored in the archive.
     ///
     /// Big-endian u32 from offset 8 to 12 (high exclusive).
-    pub fn read_len(&self) -> LibResult<u32> {
+    pub fn read_len(&self) -> Result<u32> {
         let mut values = &self[8..12];
         Ok(values.read_u32::<BigEndian>()?)
     }
@@ -308,7 +287,7 @@ impl Archive {
     /// Offset at which the first entry's data starts.
     ///
     /// Big-endian u32 from offset 12 to 16 (high exclusive).
-    pub fn read_data_start(&self) -> LibResult<u32> {
+    pub fn read_data_start(&self) -> Result<u32> {
         let mut values = &self[12..16];
         Ok(values.read_u32::<BigEndian>()?)
     }
@@ -321,7 +300,7 @@ impl Archive {
     ///
     /// I do not know if this needs to be aligned to a particular
     /// size for other BIG-manipulating tools to read it.
-    pub fn read_secret_data(&mut self, table: &EntryInfoTable) -> LibResult<Option<&[u8]>> {
+    pub fn read_secret_data(&mut self, table: &EntryInfoTable) -> Result<Option<&[u8]>> {
         let table_size = table.iter().map(|(_k, e)|
             (std::mem::size_of::<u32>() + // offset
              std::mem::size_of::<u32>() + // length
@@ -341,10 +320,10 @@ impl Archive {
     /// Read the metadata table that lists the entries in this archive.
     /// You will need to pass the resulting table to `get_data_from_table`
     /// to retrieve actual entry data.
-    pub fn read_entry_metadata_table(&mut self) -> LibResult<EntryInfoTable> {
+    pub fn read_entry_metadata_table(&mut self) -> Result<EntryInfoTable> {
         let len = self.read_len()?;
 
-        let mut c = std::io::Cursor::new(&self[..]);
+        let mut c = io::Cursor::new(&self[..]);
         c.seek(SeekFrom::Start(Self::HEADER_LEN as u64))?;
 
         let mut table = EntryInfoTable::new();
@@ -400,7 +379,6 @@ impl Deref for Archive {
 
 #[cfg(test)]
 mod tests {
-    use ::std::error::Error;
     use super::*;
 
     #[test]
@@ -445,10 +423,11 @@ mod tests {
         let result = Archive::from_bytes(bytes);
         let err = result.err().unwrap();
 
+        use std::error::Error;
         use std::io::ErrorKind;
 
         match err {
-           LibError::IO { inner } => {
+           ::Error::IO { inner } => {
                #[cfg(target_os = "windows")] {
                    assert_eq!(Some(87), inner.raw_os_error());
                    assert_eq!(ErrorKind::Other, inner.kind());

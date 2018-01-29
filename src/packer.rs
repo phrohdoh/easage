@@ -2,7 +2,7 @@ use ::std::fs::File;
 use ::std::io::{self, BufWriter, Write};
 use ::std::path::{Path, PathBuf};
 
-use ::{LibResult, LibError};
+use ::{Result, Error};
 
 use walkdir::WalkDir;
 use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
@@ -17,10 +17,14 @@ pub struct Settings {
     pub strip_prefix: Option<String>,
 }
 
-/// Note: If you pass `Kind::Unknown(..)` to this function it will return a `LibResult::Err(LibError::InvalidKind)`.
-pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, kind: ::Kind, settings: Settings) -> LibResult<()>
+/// Note: If you pass `Kind::Unknown(..)` to this function it will return a `Result::Err(Error::InvalidKind)`.
+pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, kind: ::Kind, settings: Settings) -> Result<()>
     where P: AsRef<Path>,
           W: Write {
+    if let ::Kind::Unknown(_) = kind {
+        return Err(Error::InvalidKind);
+    }
+
     let input_directory = input_directory.as_ref();
 
     let mut entries = vec![];
@@ -52,7 +56,7 @@ pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, kind: ::Kind, setti
     }
 
     if entries.len() == 0 {
-        return Err(LibError::Custom { message: String::from("Found no files to pack") });
+        return Err(Error::Custom { message: String::from("Found no files to pack") });
     }
 
     match settings.entry_order_criteria {
@@ -68,7 +72,7 @@ pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, kind: ::Kind, setti
     let kind_bytes = match kind {
         ::Kind::Big4 => "BIG4",
         ::Kind::BigF => "BIGF",
-        _ => return Err(LibError::InvalidKind),
+        _ => unreachable!(),
     }.as_bytes();
 
     let mut writer = BufWriter::new(buf);
@@ -101,7 +105,7 @@ pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, kind: ::Kind, setti
     // Write the actual data
     for entry in entries {
         let mut f = File::open(&entry.source_path).map_err(|_e|
-            LibError::Custom { message: format!("Failed to open file {:?} for reading.", entry.source_path)
+            Error::Custom { message: format!("Failed to open file {:?} for reading.", entry.source_path)
         })?;
 
         io::copy(&mut f, &mut writer)?;

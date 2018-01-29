@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::io;
 
 extern crate clap;
 use clap::{App, AppSettings};
@@ -28,9 +28,10 @@ pub enum CliError {
         message: String,
     },
 
-    #[fail(display = "Encountered an I/O error: {}", message)]
-    GeneralIoError {
-        message: String,
+    #[fail(display = "I/O error: {:?}", inner)]
+    IO {
+        #[cause]
+        inner: io::Error
     },
 
     #[fail(display = "{}", message)]
@@ -39,15 +40,17 @@ pub enum CliError {
     },
 }
 
-impl From<lib::LibError> for CliError {
-    fn from(e: lib::LibError) -> Self {
+impl From<lib::Error> for CliError {
+    fn from(e: lib::Error) -> Self {
         CliError::Custom { message: format!("{}", e) }
     }
 }
 
 impl From<::std::io::Error> for CliError {
     fn from(e: ::std::io::Error) -> Self {
-        CliError::GeneralIoError { message: e.description().to_string() }
+        CliError::IO {
+            inner: e,
+        }
     }
 }
 
