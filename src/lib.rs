@@ -259,7 +259,7 @@ impl Archive {
     ///
     /// # Errors
     ///
-    /// * If `bytes.len() == 0` this will return `Err(LibError::Custom { message: "memory map must have a non-zero length" })`
+    /// * If `bytes.len() == 0` this will return `Err(LibError::IO)`
     pub fn from_bytes(bytes: Vec<u8>) -> LibResult<Archive> {
         let mut mmap_opts = MmapOptions::new();
         let mut mmap = mmap_opts.len(bytes.len()).map_anon()?;
