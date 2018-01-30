@@ -99,20 +99,18 @@
 //! // This must be a type that implements `Write`.
 //! let mut buf = vec![];
 //!
-//! // This is the 'magic' that identifies this file
-//! // as a BIG archive. Only Big4 and BigF are supported currently.
-//! let kind = Kind::BigF;
-//!
 //! let settings = Settings {
 //!     // Order the archive entries alphanumeric by filepath.
 //!     entry_order_criteria: EntryOrderCriteria::Path,
 //!
 //!     // We do not want to strip any prefix in this example.
 //!     strip_prefix: None,
+//!
+//!     kind: Kind::BigF,
 //! };
 //!
 //! // Finally we can create our package!
-//! if let Err(e) = packer::pack_directory(directory_to_pack, &mut buf, kind, settings) {
+//! if let Err(e) = packer::pack_directory(directory_to_pack, &mut buf, settings) {
 //!     eprintln!("{}", e);
 //! }
 //!

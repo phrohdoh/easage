@@ -2,7 +2,7 @@ use ::std::fs::File;
 use ::std::io::{self, BufWriter, Write};
 use ::std::path::{Path, PathBuf};
 
-use ::{Result, Error};
+use ::{Result, Error, Kind};
 
 use walkdir::WalkDir;
 use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
@@ -15,13 +15,14 @@ pub enum EntryOrderCriteria {
 pub struct Settings {
     pub entry_order_criteria: EntryOrderCriteria,
     pub strip_prefix: Option<String>,
+    pub kind: Kind,
 }
 
 /// Note: If you pass `Kind::Unknown(..)` to this function it will return a `Result::Err(Error::InvalidKind)`.
-pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, kind: ::Kind, settings: Settings) -> Result<()>
+pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, settings: Settings) -> Result<()>
     where P: AsRef<Path>,
           W: Write {
-    if let ::Kind::Unknown(_) = kind {
+    if let ::Kind::Unknown(_) = settings.kind {
         return Err(Error::InvalidKind);
     }
 
@@ -69,7 +70,7 @@ pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, kind: ::Kind, setti
     // NOTE: For some reason FinalBig's `data_start` is 1 byte less than ours.
     let data_start = ::Archive::HEADER_LEN + table_size;
 
-    let kind_bytes = match kind {
+    let kind_bytes = match settings.kind {
         ::Kind::Big4 => "BIG4",
         ::Kind::BigF => "BIGF",
         _ => unreachable!(),
