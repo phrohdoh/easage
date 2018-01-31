@@ -1,6 +1,6 @@
 use clap::{Arg, ArgMatches, App, SubCommand};
 
-use ::lib::{Kind, Archive};
+use ::lib::{Archive, Error};
 use ::CliResult;
 
 pub const COMMAND_NAME: &'static str = "list";
@@ -27,11 +27,14 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
 
     let mut archive = Archive::from_path(path)?;
 
-    let kind = archive.read_kind();
-    if let Kind::Unknown(bytes) = kind {
-        eprintln!("Unknown archive type {:?}. Aborting.", bytes);
-        return Ok(());
-    }
+    let kind = match archive.read_kind() {
+        Ok(kind) => kind,
+        Err(Error::InvalidMagic { bytes }) => {
+            eprintln!("Unknown archive type {:?}. Aborting.", bytes);
+            return Ok(());
+        },
+        _ => unreachable!(),
+    };
 
     let table = archive.read_entry_metadata_table()?;
 

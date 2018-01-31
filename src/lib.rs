@@ -57,7 +57,8 @@
 //!     },
 //! };
 //!
-//! assert_eq!(archive.read_kind(), Kind::BigF);
+//! let kind = archive.read_kind().unwrap();
+//! assert_eq!(kind, Kind::BigF);
 //! ```
 //!
 //! Getting data of a file that is inside of an archive:
@@ -171,17 +172,16 @@ impl From<walkdir::Error> for Error {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Kind {
-    Unknown(Vec<u8>),
     Big4,
     BigF,
 }
 
 impl Kind {
-    pub fn from_bytes(bytes: &[u8]) -> Self {
+    pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
         match bytes {
-            b"BIG4" => Kind::Big4,
-            b"BIGF" => Kind::BigF,
-            _ => Kind::Unknown(Vec::from(bytes)),
+            b"BIG4" => Ok(Kind::Big4),
+            b"BIGF" => Ok(Kind::BigF),
+            _ => Err(Error::InvalidMagic { bytes: bytes.to_vec() }),
         }
     }
 }
@@ -262,8 +262,8 @@ impl Archive {
     /// this is a BIG archive.
     ///
     /// Little-endian ASCII sequence from offset 0 to 4 (high exclusive).
-    pub fn read_kind(&self) -> Kind {
-        Kind::from_bytes(&self[0..4])
+    pub fn read_kind(&self) -> Result<Kind> {
+        Kind::try_from_bytes(&self[0..4])
     }
 
     /// This is the size, in bytes, of the entire archive.
@@ -380,33 +380,50 @@ mod tests {
     use super::*;
 
     #[test]
-    fn kind_from_bytes_bigf() {
+    fn kind_try_from_bytes_bigf() {
         let bytes = b"BIGF".to_vec();
-        assert_eq!(Kind::from_bytes(&bytes), Kind::BigF);
+        let kind = Kind::try_from_bytes(&bytes).unwrap();
+        assert_eq!(kind, Kind::BigF);
     }
 
     #[test]
-    fn kind_from_bytes_big4() {
+    fn kind_try_from_bytes_big4() {
         let bytes = b"BIG4".to_vec();
-        assert_eq!(Kind::from_bytes(&bytes), Kind::Big4);
+        let kind = Kind::try_from_bytes(&bytes).unwrap();
+        assert_eq!(kind, Kind::Big4);
     }
 
     #[test]
-    fn kind_from_bytes_unknown() {
+    fn kind_try_from_bytes_err() {
         let bytes = b"".to_vec();
-        assert_eq!(Kind::from_bytes(&bytes), Kind::Unknown(bytes));
+        assert!(match Kind::try_from_bytes(&bytes) {
+            Err(Error::InvalidMagic { bytes: b }) => b == bytes,
+            _ => false,
+        });
 
         let bytes = b"BI".to_vec();
-        assert_eq!(Kind::from_bytes(&bytes), Kind::Unknown(bytes));
+        assert!(match Kind::try_from_bytes(&bytes) {
+            Err(Error::InvalidMagic { bytes: b }) => b == bytes,
+            _ => false,
+        });
 
         let bytes = b"BIG".to_vec();
-        assert_eq!(Kind::from_bytes(&bytes), Kind::Unknown(bytes));
+        assert!(match Kind::try_from_bytes(&bytes) {
+            Err(Error::InvalidMagic { bytes: b }) => b == bytes,
+            _ => false,
+        });
 
         let bytes = b"IBG".to_vec();
-        assert_eq!(Kind::from_bytes(&bytes), Kind::Unknown(bytes));
+        assert!(match Kind::try_from_bytes(&bytes) {
+            Err(Error::InvalidMagic { bytes: b }) => b == bytes,
+            _ => false,
+        });
 
         let bytes = b"BGI".to_vec();
-        assert_eq!(Kind::from_bytes(&bytes), Kind::Unknown(bytes));
+        assert!(match Kind::try_from_bytes(&bytes) {
+            Err(Error::InvalidMagic { bytes: b }) => b == bytes,
+            _ => false,
+        });
     }
 
     #[test]
@@ -449,32 +466,40 @@ mod tests {
     fn archive_read_kind_panic() {
         let bytes = vec![0];
         let archive = Archive::from_bytes(bytes).unwrap();
-        archive.read_kind();
+        archive.read_kind().is_err();
     }
 
     #[test]
     fn archive_read_kind_bigf() {
         let bytes = b"BIGF".to_vec();
         let archive = Archive::from_bytes(bytes).unwrap();
-        assert_eq!(archive.read_kind(), Kind::BigF);
+        let kind = archive.read_kind().unwrap();
+        assert_eq!(kind, Kind::BigF);
     }
 
     #[test]
     fn archive_read_kind_big4() {
         let bytes = b"BIG4".to_vec();
         let archive = Archive::from_bytes(bytes).unwrap();
-        assert_eq!(archive.read_kind(), Kind::Big4);
+        let kind = archive.read_kind().unwrap();
+        assert_eq!(kind, Kind::Big4);
     }
 
     #[test]
     fn archive_read_kind_unknown() {
         let bytes = b"    ".to_vec();
         let archive = Archive::from_bytes(bytes.clone()).unwrap();
-        assert_eq!(archive.read_kind(), Kind::Unknown(bytes));
+        assert!(match archive.read_kind() {
+            Err(Error::InvalidMagic { bytes: b }) => b == bytes,
+            _ => false,
+        });
 
         let bytes = b"IB4G".to_vec();
         let archive = Archive::from_bytes(bytes.clone()).unwrap();
-        assert_eq!(archive.read_kind(), Kind::Unknown(bytes));
+        assert!(match archive.read_kind() {
+            Err(Error::InvalidMagic { bytes: b }) => b == bytes,
+            _ => false,
+        });
     }
 
     #[test]

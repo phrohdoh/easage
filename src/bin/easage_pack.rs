@@ -68,7 +68,7 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
         .map(|s| s.to_string());
 
     let kind = args.value_of(ARG_NAME_KIND).unwrap();
-    let kind = Kind::from_bytes(kind.as_bytes());
+    let kind = Kind::try_from_bytes(kind.as_bytes()).unwrap();
 
     let settings = packer::Settings {
         entry_order_criteria,

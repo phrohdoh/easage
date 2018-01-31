@@ -14,8 +14,10 @@ pub enum Error {
         inner: io::Error
     },
 
-    #[fail(display = "The archive kind you gave is invalid in this context")]
-    InvalidKind,
+    #[fail(display = "The data provided {:?} is neither BIG4 nor BIGF", bytes)]
+    InvalidMagic {
+        bytes: Vec<u8>,
+    },
 
     #[fail(display = "{}", message)]
     Custom {

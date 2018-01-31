@@ -18,14 +18,9 @@ pub struct Settings {
     pub kind: Kind,
 }
 
-/// Note: If you pass `Kind::Unknown(..)` to this function it will return a `Result::Err(Error::InvalidKind)`.
 pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, settings: Settings) -> Result<()>
     where P: AsRef<Path>,
           W: Write {
-    if let ::Kind::Unknown(_) = settings.kind {
-        return Err(Error::InvalidKind);
-    }
-
     let input_directory = input_directory.as_ref();
 
     let mut entries = vec![];
@@ -73,7 +68,6 @@ pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, settings: Settings)
     let kind_bytes = match settings.kind {
         ::Kind::Big4 => "BIG4",
         ::Kind::BigF => "BIGF",
-        _ => unreachable!(),
     }.as_bytes();
 
     let mut writer = BufWriter::new(buf);
