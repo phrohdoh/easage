@@ -1,12 +1,11 @@
 [package]
 authors = ["Taryn Hill <taryn@phrohdoh.com>"]
+description = "Programmatic manipulation of Electronic Art's BIG format"
+include = ["src/**/*.rs", "Cargo.toml"]
 license = "MIT"
 name = "easage"
-version = "0.0.2"
-include = ["src/**/*.rs", "Cargo.toml"]
-description = "Programmatic manipulation of Electronic Art's BIG format"
 repository = "https://github.com/Phrohdoh/easage"
-# documentation = "https://docs.rs/easage/"
+version = "0.0.2"
 
 [[bin]]
 doc = false
@@ -24,3 +23,6 @@ walkdir = "1"
 [dependencies.clap]
 optional = true
 version = "2.26"
+
+[dev-dependencies]
+assert_matches = "1.1.0"
