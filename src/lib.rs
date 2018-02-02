@@ -41,26 +41,6 @@
 //! };
 //! ```
 //!
-//! Read an archive from bytes in-memory:
-//!
-//! ```rust
-//! use easage::{Archive, Kind};
-//!
-//! // This is just an example and these 4 bytes alone do not constitute a valid BIG archive.
-//! let bytes = b"BIGF".to_vec();
-//!
-//! let archive = match Archive::from_bytes(&bytes) {
-//!     Ok(archive) => archive,
-//!     Err(e) => {
-//!         eprintln!("{}", e);
-//!         return;
-//!     },
-//! };
-//!
-//! let kind = archive.read_kind().unwrap();
-//! assert_eq!(kind, Kind::BigF);
-//! ```
-//!
 //! Getting data of a file that is inside of an archive:
 //!
 //! ```rust,no_run
@@ -237,6 +217,7 @@ impl Archive {
     /// # Errors
     ///
     /// * If `bytes.len() == 0` this will return `Err(Error::IO)`
+    #[doc(hidden)]
     pub fn from_bytes(bytes: &[u8]) -> Result<Archive> {
         let mut mmap_opts = MmapOptions::new();
         let mut mmap = mmap_opts.len(bytes.len()).map_anon()?;
