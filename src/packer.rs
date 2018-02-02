@@ -51,7 +51,7 @@ pub fn pack_directory<P, W>(input_directory: P, buf: &mut W, settings: Settings)
         entries.push(Entry::new(source_path, output_filepath, len));
     }
 
-    if entries.len() == 0 {
+    if entries.is_empty() {
         return Err(Error::Custom { message: String::from("Found no files to pack") });
     }
 

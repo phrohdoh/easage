@@ -164,7 +164,7 @@ impl From<walkdir::Error> for Error {
     fn from(e: walkdir::Error) -> Self {
         let path = e.path()
             .map(|ref_path| ref_path.to_string_lossy().to_string())
-            .unwrap_or(String::from("<unknown path>"));
+            .unwrap_or_else(|| String::from("<unknown path>"));
 
         Error::PathNotFound { path }
     }
@@ -322,7 +322,7 @@ impl Archive {
         let len = self.read_len()?;
 
         let mut c = io::Cursor::new(&self[..]);
-        c.seek(SeekFrom::Start(Self::HEADER_LEN as u64))?;
+        c.seek(SeekFrom::Start(u64::from(Self::HEADER_LEN)))?;
 
         let mut table = EntryInfoTable::new();
 
