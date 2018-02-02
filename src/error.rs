@@ -14,9 +14,9 @@ pub enum Error {
         inner: io::Error
     },
 
-    #[fail(display = "The data provided {:?} is neither BIG4 nor BIGF", bytes)]
+    #[fail(display = "The data provided {:?} is neither BIG4 nor BIGF", magic)]
     InvalidMagic {
-        bytes: Vec<u8>,
+        magic: Vec<u8>,
     },
 
     #[fail(display = "{}", message)]

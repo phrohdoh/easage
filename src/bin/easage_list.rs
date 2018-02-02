@@ -29,8 +29,8 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
 
     let kind = match archive.read_kind() {
         Ok(kind) => kind,
-        Err(Error::InvalidMagic { bytes }) => {
-            eprintln!("Unknown archive type {:?}. Aborting.", bytes);
+        Err(Error::InvalidMagic { magic }) => {
+            eprintln!("Unknown archive type {:?}. Aborting.", magic);
             return Ok(());
         },
         _ => unreachable!(),

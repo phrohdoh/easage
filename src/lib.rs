@@ -181,7 +181,7 @@ impl Kind {
         match bytes {
             b"BIG4" => Ok(Kind::Big4),
             b"BIGF" => Ok(Kind::BigF),
-            _ => Err(Error::InvalidMagic { bytes: bytes.to_vec() }),
+            _ => Err(Error::InvalidMagic { magic: bytes.to_vec() }),
         }
     }
 }
@@ -399,19 +399,19 @@ mod tests {
     #[test]
     fn kind_try_from_bytes_err() {
         let bytes = b"".to_vec();
-        assert_matches!(Kind::try_from_bytes(&bytes), Err(Error::InvalidMagic { bytes: ref b }) if *b == bytes);
+        assert_matches!(Kind::try_from_bytes(&bytes), Err(Error::InvalidMagic { magic: ref b }) if *b == bytes);
 
         let bytes = b"BI".to_vec();
-        assert_matches!(Kind::try_from_bytes(&bytes), Err(Error::InvalidMagic { bytes: ref b }) if *b == bytes);
+        assert_matches!(Kind::try_from_bytes(&bytes), Err(Error::InvalidMagic { magic: ref b }) if *b == bytes);
 
         let bytes = b"BIG".to_vec();
-        assert_matches!(Kind::try_from_bytes(&bytes), Err(Error::InvalidMagic { bytes: ref b }) if *b == bytes);
+        assert_matches!(Kind::try_from_bytes(&bytes), Err(Error::InvalidMagic { magic: ref b }) if *b == bytes);
 
         let bytes = b"IBG".to_vec();
-        assert_matches!(Kind::try_from_bytes(&bytes), Err(Error::InvalidMagic { bytes: ref b }) if *b == bytes);
+        assert_matches!(Kind::try_from_bytes(&bytes), Err(Error::InvalidMagic { magic: ref b }) if *b == bytes);
 
         let bytes = b"BGI".to_vec();
-        assert_matches!(Kind::try_from_bytes(&bytes), Err(Error::InvalidMagic { bytes: ref b }) if *b == bytes);
+        assert_matches!(Kind::try_from_bytes(&bytes), Err(Error::InvalidMagic { magic: ref b }) if *b == bytes);
     }
 
     #[test]
@@ -477,11 +477,11 @@ mod tests {
     fn archive_read_kind_err() {
         let bytes = b"    ".to_vec();
         let archive = Archive::from_bytes(&bytes).unwrap();
-        assert_matches!(archive.read_kind(), Err(Error::InvalidMagic { bytes: ref b }) if *b == bytes);
+        assert_matches!(archive.read_kind(), Err(Error::InvalidMagic { magic: ref b }) if *b == bytes);
 
         let bytes = b"IB4G".to_vec();
         let archive = Archive::from_bytes(&bytes.clone()).unwrap();
-        assert_matches!(archive.read_kind(), Err(Error::InvalidMagic { bytes: ref b }) if *b == bytes);
+        assert_matches!(archive.read_kind(), Err(Error::InvalidMagic { magic: ref b }) if *b == bytes);
     }
 
     #[test]
