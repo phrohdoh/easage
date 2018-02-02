@@ -49,7 +49,7 @@
 //! // This is just an example and these 4 bytes alone do not constitute a valid BIG archive.
 //! let bytes = b"BIGF".to_vec();
 //!
-//! let archive = match Archive::from_bytes(bytes) {
+//! let archive = match Archive::from_bytes(&bytes) {
 //!     Ok(archive) => archive,
 //!     Err(e) => {
 //!         eprintln!("{}", e);
@@ -237,10 +237,10 @@ impl Archive {
     /// # Errors
     ///
     /// * If `bytes.len() == 0` this will return `Err(Error::IO)`
-    pub fn from_bytes(bytes: Vec<u8>) -> Result<Archive> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Archive> {
         let mut mmap_opts = MmapOptions::new();
         let mut mmap = mmap_opts.len(bytes.len()).map_anon()?;
-        mmap.copy_from_slice(&bytes);
+        mmap.copy_from_slice(bytes);
         let mmap = mmap.make_read_only()?;
         let mmap = Arc::new(mmap);
 
@@ -416,14 +416,14 @@ mod tests {
 
     #[test]
     fn archive_from_bytes() {
-        let result = Archive::from_bytes(vec![0]);
+        let result = Archive::from_bytes(&vec![0]);
         assert!(result.is_ok())
     }
 
     #[test]
     fn archive_from_bytes_zero_length_memmap() {
         let bytes = vec![];
-        let result = Archive::from_bytes(bytes);
+        let result = Archive::from_bytes(&bytes);
         let err = result.err().unwrap();
 
         match err {
@@ -453,14 +453,14 @@ mod tests {
     // TODO: Return an error instead of panicing.
     fn archive_read_kind_panic() {
         let bytes = vec![0];
-        let archive = Archive::from_bytes(bytes).unwrap();
-        archive.read_kind().is_err();
+        let archive = Archive::from_bytes(&bytes).unwrap();
+        let _err = archive.read_kind();
     }
 
     #[test]
     fn archive_read_kind_bigf() {
         let bytes = b"BIGF".to_vec();
-        let archive = Archive::from_bytes(bytes).unwrap();
+        let archive = Archive::from_bytes(&bytes).unwrap();
         let kind = archive.read_kind().unwrap();
         assert_eq!(kind, Kind::BigF);
     }
@@ -468,19 +468,19 @@ mod tests {
     #[test]
     fn archive_read_kind_big4() {
         let bytes = b"BIG4".to_vec();
-        let archive = Archive::from_bytes(bytes).unwrap();
+        let archive = Archive::from_bytes(&bytes).unwrap();
         let kind = archive.read_kind().unwrap();
         assert_eq!(kind, Kind::Big4);
     }
 
     #[test]
-    fn archive_read_kind_unknown() {
+    fn archive_read_kind_err() {
         let bytes = b"    ".to_vec();
-        let archive = Archive::from_bytes(bytes.clone()).unwrap();
+        let archive = Archive::from_bytes(&bytes).unwrap();
         assert_matches!(archive.read_kind(), Err(Error::InvalidMagic { bytes: ref b }) if *b == bytes);
 
         let bytes = b"IB4G".to_vec();
-        let archive = Archive::from_bytes(bytes.clone()).unwrap();
+        let archive = Archive::from_bytes(&bytes.clone()).unwrap();
         assert_matches!(archive.read_kind(), Err(Error::InvalidMagic { bytes: ref b }) if *b == bytes);
     }
 
@@ -493,7 +493,7 @@ mod tests {
         let mut bytes = b"BIGF".to_vec();
         bytes.write_u32::<LittleEndian>(expected).unwrap();
 
-        let archive = Archive::from_bytes(bytes).unwrap();
+        let archive = Archive::from_bytes(&bytes).unwrap();
         let got = archive.read_size().unwrap();
 
         assert_eq!(expected, got);
@@ -508,7 +508,7 @@ mod tests {
         let mut bytes = b"BIGF".to_vec();
         bytes.write_u32::<LittleEndian>(expected).unwrap();
 
-        let archive = Archive::from_bytes(bytes).unwrap();
+        let archive = Archive::from_bytes(&bytes).unwrap();
         let got = archive.read_size().unwrap();
 
         assert_eq!(expected, got);
@@ -523,7 +523,7 @@ mod tests {
         let mut bytes = b"BIGF".to_vec();
         bytes.write_u32::<LittleEndian>(expected).unwrap();
 
-        let archive = Archive::from_bytes(bytes).unwrap();
+        let archive = Archive::from_bytes(&bytes).unwrap();
         let got = archive.read_size().unwrap();
 
         assert_eq!(expected, got);
@@ -534,8 +534,8 @@ mod tests {
     // NOTE: `read_size` panics if `bytes.len() < 8`
     // TODO: Return an error instead of panicing.
     fn archive_read_size_panic() {
-        let bytes = b"BIGF".to_vec();
-        let archive = Archive::from_bytes(bytes).unwrap();
+        let bytes = b"BIGF";
+        let archive = Archive::from_bytes(&bytes[..]).unwrap();
         archive.read_size().unwrap();
     }
 }
