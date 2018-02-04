@@ -120,3 +120,58 @@ pub fn pack(entries: Vec<(String, &[u8])>, kind: Kind) -> Result<Archive> {
     let ret = Archive::from_bytes(&buf)?;
     Ok(ret)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pack_2_entries() {
+        let name1 = "first/entry.txt";
+        let data1 = [0, 1, 2, 3];
+
+        let name2 = "second/entry/bar.txt";
+        let data2 = [0, 9, 8, 7];
+
+        let entries = vec![
+            (name1.into(), &data1[..]),
+            (name2.into(), &data2[..]),
+        ];
+
+        let res = pack(entries, Kind::BigF);
+        assert!(res.is_ok());
+
+        let mut archive = res.unwrap();
+        let table = archive.read_entry_metadata_table().unwrap();
+
+        {
+            let entry1 = archive.get_bytes_via_table(&table, name1);
+            assert!(entry1.is_some());
+            let entry1 = entry1.unwrap();
+            assert_eq!(data1, entry1);
+        }
+
+        {
+            let entry2 = archive.get_bytes_via_table(&table, name2);
+            assert!(entry2.is_some());
+            let entry2 = entry2.unwrap();
+            assert_eq!(data2, entry2);
+        }
+
+        {
+            let entry_does_not_exist = archive.get_bytes_via_table(&table, "some/other/name.ini");
+            assert!(entry_does_not_exist.is_none());
+        }
+    }
+
+    #[test]
+    fn pack_0_entries() {
+        let res = pack(vec![], Kind::BigF);
+        assert!(res.is_err());
+
+        assert!(match res.unwrap_err() {
+            Error::AttemptCreateEmpty => true,
+            _ => false,
+        });
+    }
+}
