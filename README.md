@@ -50,6 +50,14 @@ See the [src/bin/](./src/bin/) directory for more details.
 
 See [contrib](https://github.com/Phrohdoh/easage/tree/master/contrib) for more usage suggestions.
 
+## Getting help
+
+I am often present in the `#orcaware` channel on `irc.freenode.net`.
+
+Note that this channel has many topics of discussion so you may see conversation about other projects there too.
+
+If IRC is not your thing or you don't get a good response I am happy to respond to [GitHub issues](https://github.com/Phrohdoh/easage/issues/new) as well.
+
 ## License
 
 [MIT](LICENSE.md)
