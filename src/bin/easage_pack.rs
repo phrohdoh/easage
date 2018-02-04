@@ -76,19 +76,22 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
         kind,
     };
 
-    let mut buf = vec![];
-
-    packer::pack_directory(&source, &mut buf, settings)
-        .map_err(|e| CliError::PackArchive { message: format!("{}", e) })?;
+    let archive = packer::pack_directory(&source, settings)
+        .map_err(|e_lib| CliError::PackArchive { inner: e_lib })?;
 
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)
         .create(true)
         .truncate(true)
-        .open(output)?;
+        .open(output)
+        .map_err(|e| CliError::IO {
+            inner: e,
+            path: output.to_string(),
+        })?;
 
-    Ok(file.write_all(&buf)?)
+    let data = archive.as_slice();
+    Ok(file.write_all(data)?)
 }
 
 fn arg_order_to_enum(input: &str) -> packer::EntryOrderCriteria {
@@ -98,7 +101,7 @@ fn arg_order_to_enum(input: &str) -> packer::EntryOrderCriteria {
         _  => {
             eprintln!(r#"
 Unexpected error!
-Please contact an author of this tool and provide the following text:
+Please file a bug at https://github.com/Phrohdoh/easage/issues/new and provide the following text:
 
 Invalid input to 'arg_order_to_enum': {:?}
 Did you validate input via 'validate_order'?

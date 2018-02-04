@@ -23,15 +23,18 @@ const NAME: &'static str = env!("CARGO_PKG_NAME");
 
 #[derive(Debug, Fail)]
 pub enum CliError {
-    #[fail(display = "Failed to pack the given directory: {}", message)]
+    #[fail(display = "Failed to pack the given directory: {:?}", inner)]
     PackArchive {
-        message: String,
+        #[cause]
+        inner: lib::Error,
     },
 
-    #[fail(display = "I/O error: {:?}", inner)]
+    #[fail(display = "I/O error: {} for path {:?}", inner, path)]
     IO {
         #[cause]
-        inner: io::Error
+        inner: io::Error,
+
+        path: String,
     },
 
     #[fail(display = "{}", message)]
@@ -50,6 +53,7 @@ impl From<::std::io::Error> for CliError {
     fn from(e: ::std::io::Error) -> Self {
         CliError::IO {
             inner: e,
+            path: "<unknown>".into(),
         }
     }
 }

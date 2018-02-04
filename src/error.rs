@@ -8,6 +8,9 @@ pub enum Error {
         path: String,
     },
 
+    #[fail(display = "Unable to create an empty archive")]
+    AttemptCreateEmpty,
+
     #[fail(display = "I/O error: {:?}", inner)]
     IO {
         #[cause]

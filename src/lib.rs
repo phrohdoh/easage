@@ -76,10 +76,6 @@
 //! // This must be a type that implements `AsRef<Path>`.
 //! let directory_to_pack = "path/to/a/directory";
 //!
-//! // Where to write the binary data to.
-//! // This must be a type that implements `Write`.
-//! let mut buf = vec![];
-//!
 //! let settings = Settings {
 //!     // Order the archive entries alphanumeric by filepath.
 //!     entry_order_criteria: EntryOrderCriteria::Path,
@@ -87,24 +83,33 @@
 //!     // We do not want to strip any prefix in this example.
 //!     strip_prefix: None,
 //!
+//!     // The "magic" identifier (this isn't important yet)
 //!     kind: Kind::BigF,
 //! };
 //!
-//! // Finally we can create our package!
-//! if let Err(e) = packer::pack_directory(directory_to_pack, &mut buf, settings) {
-//!     eprintln!("{}", e);
-//! }
+//! // Finally we can create our archive!
+//! let archive = match packer::pack_directory(directory_to_pack, settings) {
+//!     Ok(archive) => archive,
+//!     Err(e) => {
+//!         eprintln!("{}", e);
+//!         std::process::exit(1);
+//!     },
+//! };
 //!
-//! // At this point you probably want to write `buf` to a file.
+//! // At this point you probably want to write `archive` to a file.
+//! let data = archive.as_slice();
+//!
 //! use std::fs::OpenOptions;
 //!
 //! let mut file = OpenOptions::new()
-//!     .write(true)
 //!     .create(true)
+//!     .read(true)
+//!     .write(true)
+//!     .truncate(true)
 //!     .open("my_archive.big")
 //!     .expect("Failed to open file for writing.");
 //!
-//! file.write_all(&buf).expect("Failed to write data to the new file.");
+//! file.write_all(data).expect("Failed to write data to the new file.");
 //! ```
 
 extern crate byteorder;
@@ -150,7 +155,7 @@ impl From<walkdir::Error> for Error {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Kind {
     Big4,
     BigF,
@@ -216,9 +221,13 @@ impl Archive {
     ///
     /// # Errors
     ///
-    /// * If `bytes.len() == 0` this will return `Err(Error::IO)`
+    /// * If `bytes.len() == 0` this will return `Err(Error::AttemptCreateEmpty)`
     #[doc(hidden)]
     pub fn from_bytes(bytes: &[u8]) -> Result<Archive> {
+        if bytes.is_empty() {
+            return Err(Error::AttemptCreateEmpty);
+        }
+
         let mut mmap_opts = MmapOptions::new();
         let mut mmap = mmap_opts.len(bytes.len()).map_anon()?;
         mmap.copy_from_slice(bytes);
@@ -344,6 +353,14 @@ impl Archive {
             None => None,
         }
     }
+
+    /// Get a slice of the binary data that makes up this archive (header, table, and file data).
+    ///
+    /// This is useful for writing in-memory archives to, for example, files.
+    #[inline(always)]
+    pub fn as_slice(&self) -> &[u8] {
+        &self
+    }
 }
 
 #[doc(hidden)]
@@ -408,22 +425,7 @@ mod tests {
         let err = result.err().unwrap();
 
         match err {
-            Error::IO { inner } => {
-                use std::error::Error;
-                use std::io::ErrorKind;
-
-                #[cfg(target_os = "windows")] {
-                    assert_eq!(Some(87), inner.raw_os_error());
-                    assert_eq!(ErrorKind::Other, inner.kind());
-                    assert_eq!("other os error", inner.description());
-                }
-
-                #[cfg(not(target_os = "windows"))] {
-                    assert_eq!(None, inner.raw_os_error());
-                    assert_eq!(ErrorKind::InvalidInput, inner.kind());
-                    assert_eq!("memory map must have a non-zero length", inner.description());
-                }
-             },
+            Error::AttemptCreateEmpty => assert!(true),
             _ => assert!(false),
         };
     }
