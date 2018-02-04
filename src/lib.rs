@@ -544,4 +544,46 @@ mod tests {
         assert!(table.contains_key(name2));
         assert!(!table.contains_key("some/other/key.ini"));
     }
+
+    #[test]
+    fn archive_get_bytes_via_table() {
+        let name = "first/entry.txt";
+        let data = [0, 1, 2, 3];
+
+        let entries = vec![(name.into(), &data[..])];
+
+        let mut archive = packer::pack(entries, Kind::BigF).unwrap();
+
+        let table = archive.read_entry_metadata_table();
+        assert!(table.is_ok());
+        let table = table.unwrap();
+        assert!(table.contains_key(name));
+
+        let bytes = archive.get_bytes_via_table(&table, name);
+        assert!(bytes.is_some());
+
+        let bytes = bytes.unwrap();
+        assert_eq!(data, bytes);
+    }
+
+    #[test]
+    fn archive_get_bytes_via_table_empty() {
+        let name = "first/entry.txt";
+        let data: [u8; 0] = [];
+
+        let entries = vec![(name.into(), &data[..])];
+
+        let mut archive = packer::pack(entries, Kind::BigF).unwrap();
+
+        let table = archive.read_entry_metadata_table();
+        assert!(table.is_ok());
+        let table = table.unwrap();
+        assert!(table.contains_key(name));
+
+        let bytes = archive.get_bytes_via_table(&table, name);
+        assert!(bytes.is_some());
+
+        let bytes = bytes.unwrap();
+        assert!(bytes.is_empty());
+    }
 }
