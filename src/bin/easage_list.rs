@@ -12,7 +12,7 @@ const ARG_NAME_VERBOSE: &'static str = "verbose";
 fn path_exists_and_is_file(path: String) -> Result<(), String> {
     let path = Path::new(&path);
     let md = path.metadata()
-        .map_err(|_e| String::from("Unable to read metadata to validate path."))?;
+        .map_err(|_e| String::from("Unable to read metadata to validate path. Are you sure this file exists?"))?;
 
     if md.is_file() {
         Ok(())
