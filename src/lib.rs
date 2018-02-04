@@ -521,4 +521,27 @@ mod tests {
         let archive = Archive::from_bytes(&bytes[..]).unwrap();
         archive.read_size().unwrap();
     }
+
+    #[test]
+    fn archive_read_entry_metadata_table() {
+        let name1 = "first/entry.txt";
+        let data1 = [0, 1, 2, 3];
+
+        let name2 = "second/entry/bar.txt";
+        let data2 = [0, 9, 8, 7];
+
+        let entries = vec![
+            (name1.into(), &data1[..]),
+            (name2.into(), &data2[..]),
+        ];
+
+        let mut archive = packer::pack(entries, Kind::BigF).unwrap();
+        let table = archive.read_entry_metadata_table();
+        assert!(table.is_ok());
+        let table = table.unwrap();
+
+        assert!(table.contains_key(name1));
+        assert!(table.contains_key(name2));
+        assert!(!table.contains_key("some/other/key.ini"));
+    }
 }
