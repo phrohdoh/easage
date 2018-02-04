@@ -79,7 +79,6 @@ impl Archive {
     /// # Errors
     ///
     /// * If `bytes.len() == 0` this will return `Err(Error::AttemptCreateEmpty)`
-    #[doc(hidden)]
     pub fn from_bytes(bytes: &[u8]) -> Result<Archive> {
         if bytes.is_empty() {
             return Err(Error::AttemptCreateEmpty);
