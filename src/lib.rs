@@ -137,24 +137,6 @@ pub mod packer;
 mod error;
 pub use error::{Result, Error};
 
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self {
-        Error::IO {
-            inner: e,
-        }
-    }
-}
-
-impl From<walkdir::Error> for Error {
-    fn from(e: walkdir::Error) -> Self {
-        let path = e.path()
-            .map(|ref_path| ref_path.to_string_lossy().to_string())
-            .unwrap_or_else(|| String::from("<unknown path>"));
-
-        Error::PathNotFound { path }
-    }
-}
-
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Kind {
     Big4,
