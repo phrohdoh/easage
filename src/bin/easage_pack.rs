@@ -1,10 +1,10 @@
 use clap::{Arg, ArgMatches, App, SubCommand};
 
-use ::lib::{Kind, packer};
-use ::{CliResult, CliError};
-
 use ::std::fs::OpenOptions;
 use ::std::io::Write;
+
+use ::lib::{Kind, packer};
+use ::{CliResult, CliError};
 
 pub const COMMAND_NAME: &'static str = "pack";
 const ARG_NAME_SOURCE: &'static str = "source";
@@ -91,7 +91,8 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
         })?;
 
     let data = archive.as_slice();
-    Ok(file.write_all(data)?)
+    file.write_all(data)?;
+    Ok(())
 }
 
 fn arg_order_to_enum(input: &str) -> packer::EntryOrderCriteria {

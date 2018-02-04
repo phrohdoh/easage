@@ -42,6 +42,21 @@ pub struct EntryInfo {
     pub name: String,
 }
 
+#[doc(hidden)]
+macro_rules! check_incomplete {
+    ($archive:expr, $read_start:expr, $read_end:expr) => {
+        let len = $archive.as_slice().len();
+        if len < $read_end {
+            return Err(Error::IncompleteArchive {
+                actual_len: len,
+                expected_len: $read_end,
+                read_start: $read_start,
+                read_end: $read_end - 1,
+            });
+        }
+    };
+}
+
 /// A file container.
 ///
 /// Library users start here!
@@ -109,14 +124,20 @@ impl Archive {
     ///
     /// Little-endian ASCII sequence from offset 0 to 4 (high exclusive).
     pub fn read_kind(&self) -> Result<Kind> {
-        Kind::try_from_bytes(&self[0..4])
+        let start = 0;
+        let end = 4;
+        check_incomplete!(self, start, end);
+        Kind::try_from_bytes(&self[start..end])
     }
 
     /// This is the size, in bytes, of the entire archive.
     ///
     /// Little-endian u32 from offset 4 to 8 (high exclusive).
     pub fn read_size(&self) -> Result<u32> {
-        let mut values = &self[4..8];
+        let start = 4;
+        let end = 8;
+        check_incomplete!(self, start, end);
+        let mut values = &self[start..end];
         Ok(values.read_u32::<LittleEndian>()?)
     }
 
@@ -124,7 +145,10 @@ impl Archive {
     ///
     /// Big-endian u32 from offset 8 to 12 (high exclusive).
     pub fn read_len(&self) -> Result<u32> {
-        let mut values = &self[8..12];
+        let start = 8;
+        let end = 12;
+        check_incomplete!(self, start, end);
+        let mut values = &self[start..end];
         Ok(values.read_u32::<BigEndian>()?)
     }
 
@@ -132,7 +156,10 @@ impl Archive {
     ///
     /// Big-endian u32 from offset 12 to 16 (high exclusive).
     pub fn read_data_start(&self) -> Result<u32> {
-        let mut values = &self[12..16];
+        let start = 12;
+        let end = 16;
+        check_incomplete!(self, start, end);
+        let mut values = &self[start..end];
         Ok(values.read_u32::<BigEndian>()?)
     }
 
@@ -158,6 +185,7 @@ impl Archive {
             return Ok(None);
         }
 
+        check_incomplete!(self, secret_data_offset, data_start);
         Ok(Some(&self[secret_data_offset..data_start]))
     }
 
@@ -165,6 +193,7 @@ impl Archive {
     /// You will need to pass the resulting table to `get_data_from_table`
     /// to retrieve actual entry data.
     pub fn read_entry_metadata_table(&mut self) -> Result<EntryInfoTable> {
+        // TODO: Do not trust `len`.
         let len = self.read_len()?;
 
         let mut c = io::Cursor::new(&self[..]);
@@ -199,23 +228,24 @@ impl Archive {
     ///
     /// A panic will occurr if data start or end for an entry lies outside
     /// of the archive file's boundaries.
-    pub fn get_bytes_via_table(&mut self, table: &EntryInfoTable, name: &str) -> Option<&[u8]> {
+    pub fn get_bytes_via_table(&mut self, table: &EntryInfoTable, name: &str) -> Result<Option<&[u8]>> {
         match table.get(name) {
             Some(entry) => {
                 let start = entry.offset as usize;
                 let end = entry.offset as usize + entry.len as usize;
-                Some(&self[start..end])
+                check_incomplete!(self, start, end);
+                let data = &self[start..end];
+                Ok(Some(data))
             },
-            None => None,
+            None => Err(Error::NoSuchEntry),
         }
     }
 
     /// Get a slice of the binary data that makes up this archive (header, table, and file data).
     ///
     /// This is useful for writing in-memory archives to, for example, files.
-    #[inline(always)]
     pub fn as_slice(&self) -> &[u8] {
-        &self
+        self
     }
 }
 
@@ -282,13 +312,11 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    // NOTE: `read_kind` panics if `bytes.len() < 4`
-    // TODO: Return an error instead of panicing.
-    fn archive_read_kind_panic() {
+    fn archive_read_kind_incomplete() {
         let bytes = vec![0];
         let archive = Archive::from_bytes(&bytes).unwrap();
-        let _err = archive.read_kind();
+        let res_kind = archive.read_kind();
+        assert_matches!(res_kind, Err(Error::IncompleteArchive { .. }))
     }
 
     #[test]
@@ -308,7 +336,7 @@ mod tests {
     }
 
     #[test]
-    fn archive_read_kind_err() {
+    fn archive_read_kind_invalid_magic() {
         let bytes = b"    ".to_vec();
         let archive = Archive::from_bytes(&bytes).unwrap();
         assert_matches!(archive.read_kind(), Err(Error::InvalidMagic { magic: ref b }) if *b == bytes);
@@ -410,11 +438,8 @@ mod tests {
         let table = table.unwrap();
         assert!(table.contains_key(name));
 
-        let bytes = archive.get_bytes_via_table(&table, name);
-        assert!(bytes.is_some());
-
-        let bytes = bytes.unwrap();
-        assert_eq!(data, bytes);
+        let res_opt_bytes = archive.get_bytes_via_table(&table, name);
+        assert_matches!(res_opt_bytes, Ok(Some(bytes)) if bytes == data);
     }
 
     #[test]
@@ -431,10 +456,7 @@ mod tests {
         let table = table.unwrap();
         assert!(table.contains_key(name));
 
-        let bytes = archive.get_bytes_via_table(&table, name);
-        assert!(bytes.is_some());
-
-        let bytes = bytes.unwrap();
-        assert!(bytes.is_empty());
+        let res_opt_bytes = archive.get_bytes_via_table(&table, name);
+        assert_matches!(res_opt_bytes, Ok(Some(bytes)) if bytes == data);
     }
 }

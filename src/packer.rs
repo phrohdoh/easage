@@ -145,22 +145,18 @@ mod tests {
         let table = archive.read_entry_metadata_table().unwrap();
 
         {
-            let entry1 = archive.get_bytes_via_table(&table, name1);
-            assert!(entry1.is_some());
-            let entry1 = entry1.unwrap();
-            assert_eq!(data1, entry1);
+            let res_opt_bytes1 = archive.get_bytes_via_table(&table, name1);
+            assert_matches!(res_opt_bytes1, Ok(Some(bytes)) if bytes == data1);
         }
 
         {
-            let entry2 = archive.get_bytes_via_table(&table, name2);
-            assert!(entry2.is_some());
-            let entry2 = entry2.unwrap();
-            assert_eq!(data2, entry2);
+            let res_opt_bytes2 = archive.get_bytes_via_table(&table, name2);
+            assert_matches!(res_opt_bytes2, Ok(Some(bytes)) if bytes == data2);
         }
 
         {
-            let entry_does_not_exist = archive.get_bytes_via_table(&table, "some/other/name.ini");
-            assert!(entry_does_not_exist.is_none());
+            let res_opt_other_bytes = archive.get_bytes_via_table(&table, "some/other/name.ini");
+            assert_matches!(res_opt_other_bytes, Err(Error::NoSuchEntry));
         }
     }
 

@@ -8,16 +8,29 @@ pub enum Error {
         path: String,
     },
 
-    #[fail(display = "Unable to create an empty archive")]
+    #[fail(display = "Unable to create an empty archive.")]
     AttemptCreateEmpty,
 
-    #[fail(display = "I/O error: {:?}", inner)]
+    #[fail(display = "Failed to read data from an incomplete archive.
+Archive is {} bytes long but was expected to be at least {}.
+Attempted to read from offset {:#X} to {:#X} inclusive.", actual_len, expected_len, read_start, read_end)]
+    IncompleteArchive {
+        actual_len: usize,
+        expected_len: usize,
+        read_start: usize,
+        read_end: usize,
+    },
+
+    #[fail(display = "The requested entry does not exist in this archive.")]
+    NoSuchEntry,
+
+    #[fail(display = "I/O error: {}", inner)]
     IO {
         #[cause]
         inner: io::Error
     },
 
-    #[fail(display = "The data provided {:?} is neither BIG4 nor BIGF", magic)]
+    #[fail(display = "The data provided {:?} is neither BIG4 nor BIGF.", magic)]
     InvalidMagic {
         magic: Vec<u8>,
     },

@@ -18,5 +18,6 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
     let shell = args.value_of(ARG_NAME_SHELL).unwrap();
     let shell = shell.parse().unwrap();
 
-    Ok(::build_cli().gen_completions_to(::NAME, shell, &mut ::std::io::stdout()))
+    ::build_cli().gen_completions_to(::NAME, shell, &mut ::std::io::stdout());
+    Ok(())
 }

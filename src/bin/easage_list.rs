@@ -1,3 +1,5 @@
+use ::std::path::Path;
+
 use clap::{Arg, ArgMatches, App, SubCommand};
 
 use ::lib::{Archive, Error};
@@ -7,6 +9,18 @@ pub const COMMAND_NAME: &'static str = "list";
 const ARG_NAME: &'static str = "source";
 const ARG_NAME_VERBOSE: &'static str = "verbose";
 
+fn path_exists_and_is_file(path: String) -> Result<(), String> {
+    let path = Path::new(&path);
+    let md = path.metadata()
+        .map_err(|_e| String::from("Unable to read metadata to validate path."))?;
+
+    if md.is_file() {
+        Ok(())
+    } else {
+        Err(String::from("path must be an existing file (not a directory)"))
+    }
+}
+
 pub fn get_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name(COMMAND_NAME)
         .about("List the contents of a BIG archive")
@@ -15,6 +29,7 @@ pub fn get_command<'a, 'b>() -> App<'a, 'b> {
                 .index(1)
                 .takes_value(true)
                 .required(true)
+                .validator(path_exists_and_is_file)
                 .help("path to the BIG to read"))
         .arg(Arg::with_name(ARG_NAME_VERBOSE)
                 .long(ARG_NAME_VERBOSE)
@@ -33,7 +48,10 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
             eprintln!("Unknown archive type {:?}. Aborting.", magic);
             return Ok(());
         },
-        _ => unreachable!(),
+        Err(e) => {
+            eprintln!("{}", e);
+            return Ok(());
+        },
     };
 
     let table = archive.read_entry_metadata_table()?;
@@ -59,7 +77,7 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
         .map(|(name, entry)| (name, entry.offset, entry.len))
         .collect::<Vec<_>>();
 
-    entry_info.sort_by(|e1, e2| (*e1.0).cmp(&e2.0));
+    entry_info.sort_by(|e1, e2| (*e1.0).cmp(e2.0));
 
     if is_verbose {
         println!("Entries:");

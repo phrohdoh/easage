@@ -56,16 +56,16 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
     let mut archive = Archive::from_path(source)?;
     let table = archive.read_entry_metadata_table()?;
 
-    for (entry_name, _entry) in table.iter() {
+    for entry_name in table.keys() {
         if !should_unpack_all {
-            if let Some(ref names) = names.as_ref() {
+            if let Some(names) = names.as_ref() {
                 if names.contains(&entry_name.as_str()) {
                     continue;
                 }
             }
         }
 
-        if let Some(data) = archive.get_bytes_via_table(&table, entry_name) {
+        if let Ok(Some(data)) = archive.get_bytes_via_table(&table, entry_name) {
             let output_file = {
                 let mut o = output.clone();
                 o.push(entry_name.replace("\\", "/"));
@@ -77,7 +77,7 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
                     message: format!("Parent directory for output file {} could not be found.", output_file.display())
                 })?;
 
-            let _ = fs::create_dir_all(&output_dir);
+            fs::create_dir_all(&output_dir)?;
 
             let mut f = OpenOptions::new()
                 .create(true)
@@ -86,7 +86,7 @@ pub fn run(args: &ArgMatches) -> CliResult<()> {
                 .truncate(true)
                 .open(&output_file)?;
 
-            f.write(data)?;
+            let _len = f.write(data)?;
         }
     }
 

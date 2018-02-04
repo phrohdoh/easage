@@ -61,7 +61,7 @@
 //! // NOTE: `table` is an easage::EntryInfoTable which
 //! // you can `.iter()` over to inspect all entries.
 //!
-//! if let Some(data) = archive.get_bytes_via_table(&table, "your/entry/name.txt") {
+//! if let Ok(Some(data)) = archive.get_bytes_via_table(&table, "your/entry/name.txt") {
 //!     // data: &[u8]
 //! }
 //! ```
