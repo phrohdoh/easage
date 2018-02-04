@@ -28,6 +28,18 @@ You must have the [Rust](https://rust-lang.org) toolchain installed (which inclu
 cargo build --release
 ```
 
+## Testing
+
+To run the included unit tests execute the following command in the root of the project:
+
+```sh
+cargo test
+```
+
+We do require that all tests pass before a PR is merged.
+
+If you need help getting a test to pass (existing or one you have written) do not hesitate to reach out to us (either via GitHub issues or on IRC).
+
 ## Running
 
 Included in this source tree is a command-line application named `easage` that uses the `easage` library.
