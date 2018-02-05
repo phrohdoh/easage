@@ -410,8 +410,8 @@ mod tests {
         let data2 = [0, 9, 8, 7];
 
         let entries = vec![
-            (name1.into(), &data1[..]),
-            (name2.into(), &data2[..]),
+            (name1, &data1[..]),
+            (name2, &data2[..]),
         ];
 
         let mut archive = packer::pack(entries, Kind::BigF).unwrap();
@@ -429,7 +429,7 @@ mod tests {
         let name = "first/entry.txt";
         let data = [0, 1, 2, 3];
 
-        let entries = vec![(name.into(), &data[..])];
+        let entries = vec![(name, &data[..])];
 
         let mut archive = packer::pack(entries, Kind::BigF).unwrap();
 
@@ -447,7 +447,7 @@ mod tests {
         let name = "first/entry.txt";
         let data: [u8; 0] = [];
 
-        let entries = vec![(name.into(), &data[..])];
+        let entries = vec![(name, &data[..])];
 
         let mut archive = packer::pack(entries, Kind::BigF).unwrap();
 
