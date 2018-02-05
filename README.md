@@ -16,7 +16,7 @@ file within the archive.
 
 > Note: The above was lifted directly from https://github.com/TheAssemblyArmada/Thyme/wiki/BIG-File-Format
 
-Noteable games built on the SAGE engine are:
+Notable games built on the SAGE engine are:
 * Battle For Middle-Earth (1, 2, RotWK)
 * Command & Conquer Generals (and the expansion Zero Hour)
 
