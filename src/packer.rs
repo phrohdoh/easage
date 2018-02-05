@@ -1,11 +1,12 @@
-use ::std::fs::File;
-use ::std::path::Path;
-use ::std::io::{self, Read, Write};
-
-use ::{Result, Error, Archive, Kind};
+use std::fs::File;
+use std::io::{self, Read, Write};
+use std::path::Path;
+use std::mem;
 
 use walkdir::WalkDir;
 use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
+
+use ::{Result, Error, Archive, Kind};
 
 pub enum EntryOrderCriteria {
     SmallestToLargest,
@@ -53,7 +54,7 @@ pub fn pack_directory<P>(directory: P, settings: Settings) -> Result<Archive>
 
     let entries = entries
         .iter()
-        .map(|&(ref name, ref data)| (name.clone(), data.as_slice())) // TODO: Do this without `clone`.
+        .map(|&(ref name, ref data)| (name.as_str(), data.as_slice()))
         .collect::<Vec<_>>();
 
     let archive = pack(entries, settings.kind)?;
@@ -64,14 +65,14 @@ pub fn pack_directory<P>(directory: P, settings: Settings) -> Result<Archive>
 ///
 /// The `name` / `.0`th item in `entries` *is not* the path on disk.
 /// It is the name that the given entry will have in the output archive.
-pub fn pack(entries: Vec<(String, &[u8])>, kind: Kind) -> Result<Archive> {
+pub fn pack(entries: Vec<(&str, &[u8])>, kind: Kind) -> Result<Archive> {
     if entries.is_empty() {
         return Err(Error::AttemptCreateEmpty);
     }
 
     let table_size = entries.iter().map(|itm| {
-        ::std::mem::size_of::<u32>() + // offset
-        ::std::mem::size_of::<u32>() + // length
+        mem::size_of::<u32>() + // offset
+        mem::size_of::<u32>() + // length
         itm.0.len() + 1 // name + null
     }).sum::<usize>();
 
@@ -81,8 +82,8 @@ pub fn pack(entries: Vec<(String, &[u8])>, kind: Kind) -> Result<Archive> {
     let total_archive_size = data_start + total_size_of_entries;
 
     let kind_bytes = match kind {
-        ::Kind::Big4 => b"BIG4",
-        ::Kind::BigF => b"BIGF",
+        Kind::Big4 => b"BIG4",
+        Kind::BigF => b"BIGF",
     };
 
     let mut buf = Vec::with_capacity(total_archive_size);
@@ -134,8 +135,8 @@ mod tests {
         let data2 = [0, 9, 8, 7];
 
         let entries = vec![
-            (name1.into(), &data1[..]),
-            (name2.into(), &data2[..]),
+            (name1, &data1[..]),
+            (name2, &data2[..]),
         ];
 
         let res = pack(entries, Kind::BigF);
@@ -163,11 +164,6 @@ mod tests {
     #[test]
     fn pack_0_entries() {
         let res = pack(vec![], Kind::BigF);
-        assert!(res.is_err());
-
-        assert!(match res.unwrap_err() {
-            Error::AttemptCreateEmpty => true,
-            _ => false,
-        });
+        assert_matches!(res, Err(Error::AttemptCreateEmpty));
     }
 }
