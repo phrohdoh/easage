@@ -1,6 +1,6 @@
 use ::std;
 use std::collections::HashMap;
-use std::io::{self, BufRead, Seek,  SeekFrom};
+use std::io::{self, BufRead, Seek,  SeekFrom, ErrorKind as IoErrorKind};
 use std::ops::Deref;
 use std::path::Path;
 use std::fs::File;
@@ -79,7 +79,15 @@ impl Archive {
     /// This does not perform any data reads and as such performs no archive validation.
     pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Archive> {
         let path = path.as_ref();
-        let file = File::open(path)?;
+
+        let file = match File::open(path) {
+            Ok(f) => f,
+            Err(e) => return Err(match e.kind() {
+                IoErrorKind::NotFound => Error::PathNotFound { path: path.display().to_string() },
+                _ => e.into(),
+            })
+        };
+
         let mmap = unsafe { MmapOptions::new().map(&file)? };
         let mmap = Arc::new(mmap);
         let data = ArcRef::new(mmap).map(|mm| mm.as_ref());
